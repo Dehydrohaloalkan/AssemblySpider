@@ -39,6 +39,7 @@ section '.sdata' data readable writeable
     hdcMem          dd      ?
     HighWord        dd      ?
     LowWord         dd      ?
+    RandPr          dd      ?
     RectClient      RECT
     ps              PAINTSTRUCT
 

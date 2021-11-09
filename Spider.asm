@@ -19,7 +19,7 @@ start:
 
     stdcall LoadImages
     stdcall SetColumnsLenght
-    stdcall SetInitArrayDBG
+    stdcall SetInitArray
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0

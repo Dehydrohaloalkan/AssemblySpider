@@ -1,6 +1,31 @@
 
 section '.cardEn' code readable executable
 
+proc RandomInit
+
+     mov [RandPr], 13
+
+     ret
+     endp
+proc RandomGet wMin, wMax
+
+     mov        eax, [RandPr]
+     rol        eax, 7
+     add        eax, 23
+     mov        [RandPr], eax
+
+     mov        ecx, [wMax]
+     sub        ecx, [wMin]
+     inc        ecx
+     xor        edx, edx
+     div        ecx
+     mov        eax, edx
+     add        eax, [wMin]
+
+     ret
+     endp
+
+
 proc SetInitArrayDBG
 
     xor edx, edx
@@ -17,6 +42,47 @@ proc SetInitArrayDBG
     add edx, 4
     cmp edx, 104*4
     jne .startloop1
+
+    ret
+    endp
+proc SetInitArray uses esi edi
+
+    xor edx, edx
+    mov eax, 1
+    .startloop1:
+
+        mov [edx + InitArray], eax
+        inc eax
+        cmp eax, 14
+        jne .endloop1
+        mov eax, 1
+
+    .endloop1:
+    add edx, 4
+    cmp edx, 104*4
+    jne .startloop1
+
+    stdcall RandomInit
+
+    mov ecx, 50
+    .startloop2:
+    push ecx
+
+        stdcall RandomGet, 0, 103
+        mov edi, eax
+        shl edi, 2
+        stdcall RandomGet, 0, 103
+        mov esi, eax
+        shl esi, 2
+
+        mov eax, [InitArray + esi]
+        mov edx, [InitArray + edi]
+        mov [InitArray + edi], eax
+        mov [InitArray + esi], edx
+
+    pop ecx
+    loop .startloop2
+
 
     ret
     endp
