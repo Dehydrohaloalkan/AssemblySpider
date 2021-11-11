@@ -1,25 +1,12 @@
 
-CardResolutionX = 142
-CardResolutionY = 192
+CardResolutionX = 71
+CardResolutionY = 96
 
 section '.cardst' data readable writeable
 
-    _name0      TCHAR   'res\Card0.bmp', 0
-    _name1      TCHAR   'res\Card1.bmp', 0
-    _name2      TCHAR   'res\Card2.bmp', 0
-    _name3      TCHAR   'res\Card3.bmp', 0
-    _name4      TCHAR   'res\Card4.bmp', 0
-    _name5      TCHAR   'res\Card5.bmp', 0
-    _name6      TCHAR   'res\Card6.bmp', 0
-    _name7      TCHAR   'res\Card7.bmp', 0
-    _name8      TCHAR   'res\Card8.bmp', 0
-    _name9      TCHAR   'res\Card9.bmp', 0
-    _name10     TCHAR   'res\Card10.bmp', 0
-    _name11     TCHAR   'res\Card11.bmp', 0
-    _name12     TCHAR   'res\Card12.bmp', 0
-    _name13     TCHAR   'res\Card13.bmp', 0
+    _texturename       TCHAR   'res\cards_hearts.bmp', 0
 
-    hCards      dd      14 dup ?
+    hCards      dd      ?
 
 section '.sdata' data readable writeable
 

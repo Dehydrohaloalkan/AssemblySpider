@@ -601,7 +601,7 @@ proc CheckSolveDeck uses ebx, Index
 
 proc DrawMap, hDC
 
-    invoke CreateSolidBrush, 00221D18h
+    invoke CreateSolidBrush, 006AD8FFh
     push eax
     invoke FillRect, [hDC], RectClient, eax
 
@@ -659,8 +659,8 @@ proc DrawSolvingDecks, hDC
 
     .startloop1:
     push ecx
-        stdcall GethCard, 13
-        stdcall DrawCard, [hDC], [XPos], [YPos], eax
+        stdcall GetTextureCardIndex, 13
+        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hCards]
         mov eax, [XPos]
         add eax, 40
         mov [XPos], eax
@@ -695,8 +695,8 @@ proc DrawNewDecks, hDC
 
     .startloop1:
     push ecx
-        stdcall GethCard, 0
-        stdcall DrawCard, [hDC], [XPos], [YPos], eax
+        stdcall GetTextureCardIndex, 0
+        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hCards]
         mov eax, [XPos]
         sub eax, 40
         mov [XPos], eax
@@ -721,9 +721,9 @@ proc DrawCards, hDC
         jz .endloop2
         .startloop2:
         push ecx edx edx
-            stdcall GethCard, [CardInfo + edx]
+            stdcall GetTextureCardIndex, [CardInfo + edx]
             pop edx
-            stdcall DrawCard, [hDC], [CardsPositionX + edx], [CardsPositionY + edx], eax
+            stdcall DrawCard, [hDC], [CardsPositionX + edx], [CardsPositionY + edx], eax, [hCards]
 
         pop edx ecx
         add edx, 4
@@ -737,7 +737,7 @@ proc DrawCards, hDC
 
     ret
     endp
-proc DrawCard, hDC, left, top, hcard
+proc DrawCard, hDC, left, top, index, hcard
 
     locals
         hCardDC dd  ?
@@ -748,8 +748,12 @@ proc DrawCard, hDC, left, top, hcard
     invoke SelectObject, [hCardDC], [hcard]
     mov [hcard], eax
 
+    mov eax, [index]
+    mov edx, CardResolutionX
+    mul edx
+
     invoke TransparentBlt, [hDC], [left], [top], [CardWigth], [CardHeight], \
-                         [hCardDC], 0, 0, CardResolutionX, CardResolutionY, 00FF8080h
+                         [hCardDC], eax, 0, CardResolutionX, CardResolutionY, 00FF8080h
 
 
     invoke SelectObject, [hCardDC], [hcard]
@@ -757,21 +761,19 @@ proc DrawCard, hDC, left, top, hcard
 
     ret
     endp
-proc GethCard, Info
+proc GetTextureCardIndex, Info
 
-    mov edx, [Info]
-    shr edx, 4
-    cmp edx, 1
+    mov eax, [Info]
+    shr eax, 4
+    cmp eax, 1
     je .closecard
 
-    mov edx, [Info]
-    and edx, 0Fh
-    shl edx, 2
-    mov eax, [hCards + edx]
+    mov eax, [Info]
+    and eax, 0Fh
     jmp .finish
 
     .closecard:
-        mov eax, [hCards]
+        xor eax, eax
 
     .finish:
     ret

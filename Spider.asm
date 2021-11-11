@@ -211,34 +211,8 @@ proc GetLHparam, LH, L, H
 
 proc LoadImages
 
-    invoke LoadImage, [wc.hInstance], _name0, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 0], eax
-    invoke LoadImage, [wc.hInstance], _name1, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 1], eax
-    invoke LoadImage, [wc.hInstance], _name2, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 2], eax
-    invoke LoadImage, [wc.hInstance], _name3, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 3], eax
-    invoke LoadImage, [wc.hInstance], _name4, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 4], eax
-    invoke LoadImage, [wc.hInstance], _name5, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 5], eax
-    invoke LoadImage, [wc.hInstance], _name6, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 6], eax
-    invoke LoadImage, [wc.hInstance], _name7, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 7], eax
-    invoke LoadImage, [wc.hInstance], _name8, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 8], eax
-    invoke LoadImage, [wc.hInstance], _name9, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 9], eax
-    invoke LoadImage, [wc.hInstance], _name10, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 10], eax
-    invoke LoadImage, [wc.hInstance], _name11, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 11], eax
-    invoke LoadImage, [wc.hInstance], _name12, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 12], eax
-    invoke LoadImage, [wc.hInstance], _name13, IMAGE_BITMAP, CardResolutionX, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards + 4 * 13], eax
+    invoke LoadImage, [wc.hInstance], _texturename, IMAGE_BITMAP, CardResolutionX*14, CardResolutionY, LR_LOADFROMFILE
+    mov [hCards], eax
 
     ret
     endp
