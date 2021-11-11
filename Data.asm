@@ -73,7 +73,14 @@ section '.idata' import data readable writeable
 
     library kernel32, 'KERNEL32.DLL', \
             user32,   'USER32.DLL', \
-            gdi32,    'GDI32.DLL'
+            gdi32,    'GDI32.DLL',\
+            msimg32,  'msimg32.dll'
+
+
+    import msimg32,\
+       TransparentBlt, 'TransparentBlt'
+
+
 
     include 'api\kernel32.inc'
     include 'api\user32.inc'

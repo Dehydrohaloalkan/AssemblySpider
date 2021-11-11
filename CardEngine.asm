@@ -176,6 +176,21 @@ proc SetCardsInformation uses ebx esi edi
 
     ret
     endp
+proc SetCardMetrics
+
+    mov eax, [RectClient.right]
+    xor edx, edx
+    mov ecx, 13
+    div ecx
+    mov [CardWigth], eax
+    xor edx, edx
+    mov ecx, 3
+    div ecx
+    shl eax, 2
+    mov [CardHeight], eax
+
+    ret
+    endp
 proc CopyCards uses esi edi, Index, SoursColumn, DestColumn
 
     mov esi, [SoursColumn]
@@ -263,6 +278,27 @@ proc AddNewCards uses ebx esi edi
     loop .startloop1
     mov [InitPt], esi
 
+    ret
+    endp
+proc CheckEmptyColums
+
+    xor edx, edx
+    .startloop1:
+
+        mov eax, [ColumnLength + edx]
+        cmp eax, 0
+        je .empty
+
+    add edx, 4
+    cmp edx, 10*4
+    jne .startloop1
+
+    mov eax, 1
+    jmp .finish
+    .empty:
+    mov eax, 0
+
+    .finish:
     ret
     endp
 
@@ -569,9 +605,9 @@ proc DrawMap, hDC
     push eax
     invoke FillRect, [hDC], RectClient, eax
 
-    stdcall DrawCards, [hDC]
     stdcall DrawSolvingDecks, [hDC]
     stdcall DrawNewDecks, [hDC]
+    stdcall DrawCards, [hDC]
 
     mov eax, [SolvingDecksCount]
     cmp eax, 8
@@ -712,8 +748,9 @@ proc DrawCard, hDC, left, top, hcard
     invoke SelectObject, [hCardDC], [hcard]
     mov [hcard], eax
 
-    invoke StretchBlt, [hDC], [left], [top], [CardWigth], [CardHeight], \
-                       [hCardDC], 0, 0, CardResolutionX, CardResolutionY, SRCCOPY
+    invoke TransparentBlt, [hDC], [left], [top], [CardWigth], [CardHeight], \
+                         [hCardDC], 0, 0, CardResolutionX, CardResolutionY, 00FF8080h
+
 
     invoke SelectObject, [hCardDC], [hcard]
     invoke DeleteDC, [hCardDC]

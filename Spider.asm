@@ -19,7 +19,7 @@ start:
 
     stdcall LoadImages
     stdcall SetColumnsLenght
-    stdcall SetInitArray
+    stdcall SetInitArrayDBG
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0
@@ -52,6 +52,12 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
 
     .wmsize:
+        mov eax, [hbmpbuffer]
+        cmp eax, 0
+        je .create
+        invoke DeleteObject, eax
+
+        .create:
         invoke CreateIC, _text, NULL, NULL, NULL
         mov [hdc], eax
 
@@ -60,10 +66,15 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         mov [hbmpbuffer], eax
 
         invoke SetRect, RectClient, 0, 0, [LowWord], [HighWord]
+
+        stdcall SetCardMetrics
+
+        invoke DeleteDC, [hdc]
         invoke InvalidateRect, [hwnd], NULL, 0
         jmp .finish
 
     .wmpaint:
+
         stdcall SetCardsInformation
 
         invoke BeginPaint, [hwnd], ps
@@ -72,13 +83,12 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke CreateCompatibleDC, [hdc]
         mov [hdcMem], eax
 
-        invoke SaveDC, [hdcMem]
         invoke SelectObject, [hdcMem], [hbmpbuffer]
 
         stdcall DrawMap, [hdcMem]
+
         invoke BitBlt, [hdc], 0, 0, [RectClient.right], [RectClient.bottom], [hdcMem], 0, 0, SRCCOPY
 
-        invoke RestoreDC, [hdcMem]
         invoke DeleteDC, [hdcMem]
         invoke EndPaint, [hwnd], ps
         jmp .finish
@@ -112,6 +122,9 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             jmp .finish
 
         .newdeck:
+            stdcall CheckEmptyColums
+            cmp eax, 0
+            je .nomove
             stdcall AddNewCards
             dec [NewDecksCount]
             jmp .finish
