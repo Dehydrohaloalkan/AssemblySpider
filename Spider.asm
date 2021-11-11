@@ -47,6 +47,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmmousemove
     cmp [wmsg], WM_LBUTTONUP
     je .wmlbuttonup
+    cmp [wmsg], WM_GETMINMAXINFO
+    je .wmgetminmaxinfo
 
     .defwndproc:
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
@@ -184,6 +186,15 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         .theend:
             stdcall PostCheckCards
             invoke InvalidateRect, [hwnd], NULL, 0
+
+        jmp .finish
+
+    .wmgetminmaxinfo:
+
+        mov edx, [lparam]
+        add edx, 24
+        mov DWORD [edx], 1200
+        mov DWORD [edx + 4], 800
 
         jmp .finish
 

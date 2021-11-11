@@ -213,6 +213,7 @@ proc SetMetrics
 
     ret
     endp
+
 proc CopyCards uses esi edi, Index, SoursColumn, DestColumn
 
     mov esi, [SoursColumn]
