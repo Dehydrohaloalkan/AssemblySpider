@@ -32,13 +32,15 @@ section '.sdata' data readable writeable
 
 section '.gdata' data readable writeable
 
-    CardHeight              dd      190
-    CardWigth               dd      140
-    CenterColumnInterval    dd  ?
+    CardHeight              dd      ?
+    CardWigth               dd      ?
     ColumnInterval          dd      11      dup     40
+    CenterColumnInterval    dd      ?
+    Indent                  dd      ?
+    DownInterval            dd      ? 
+
     InitArray               dd      104     dup     ?
     InitPt                  dd      0
-    InitFlag                dd      0
     SolvingDecksCount       dd      0
     NewDecksCount           dd      5
 

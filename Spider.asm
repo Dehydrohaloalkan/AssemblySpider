@@ -68,7 +68,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         invoke SetRect, RectClient, 0, 0, [LowWord], [HighWord]
 
-        stdcall SetCardMetrics
+        stdcall SetMetrics
 
         invoke DeleteDC, [hdc]
         invoke InvalidateRect, [hwnd], NULL, 0

@@ -111,17 +111,11 @@ proc SetCardsPositions uses ebx
 
     locals
         VerticalInterval    dd  ?
-        Indent              dd  40
     endl
 
-    mov eax, [RectClient.right]
-    xor edx, edx
-    mov ebx, 11
-    div ebx
+    mov eax, [CenterColumnInterval]
     mov edx, [CardWigth]
     shr edx, 1
-
-    mov [CenterColumnInterval], eax
     sub eax, edx
 
     xor edx, edx
@@ -189,18 +183,33 @@ proc SetCardsStartInfo uses esi
 
     ret
     endp
-proc SetCardMetrics
+proc SetMetrics
 
     mov eax, [RectClient.right]
     xor edx, edx
     mov ecx, 13
     div ecx
     mov [CardWigth], eax
+
     xor edx, edx
     mov ecx, 3
     div ecx
     shl eax, 2
     mov [CardHeight], eax
+
+    mov eax, [RectClient.right]
+    xor edx, edx
+    mov ebx, 11
+    div ebx
+    mov [CenterColumnInterval], eax
+
+    mov eax, [RectClient.bottom]
+    shr eax, 5
+    mov [Indent], eax
+
+    mov eax, [CardWigth]
+    shr eax, 3
+    mov [DownInterval], eax
 
     ret
     endp
@@ -662,12 +671,11 @@ proc DrawSolvingDecks, hDC
     je .finish
 
     mov eax, [CenterColumnInterval]
-    shr eax, 1
     mov [XPos], eax
 
     mov eax, [RectClient.bottom]
     sub eax, [CardHeight]
-    sub eax, 40
+    sub eax, [Indent]
     mov [YPos], eax
 
     .startloop1:
@@ -675,7 +683,7 @@ proc DrawSolvingDecks, hDC
         stdcall GetTextureCardIndex, 13
         stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hCards]
         mov eax, [XPos]
-        add eax, 40
+        add eax, [DownInterval]
         mov [XPos], eax
     pop ecx
     loop .startloop1
@@ -696,14 +704,13 @@ proc DrawNewDecks, hDC
 
     mov eax, [RectClient.right]
     mov edx, [CenterColumnInterval]
-    shr edx, 1
     sub eax, edx
     sub eax, [CardWigth]
     mov [XPos], eax
 
     mov eax, [RectClient.bottom]
     sub eax, [CardHeight]
-    sub eax, 40
+    sub eax, [Indent]
     mov [YPos], eax
 
     .startloop1:
@@ -711,7 +718,7 @@ proc DrawNewDecks, hDC
         stdcall GetTextureCardIndex, 0
         stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hCards]
         mov eax, [XPos]
-        sub eax, 40
+        sub eax, [DownInterval]
         mov [XPos], eax
     pop ecx
     loop .startloop1
