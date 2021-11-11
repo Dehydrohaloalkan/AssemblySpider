@@ -213,7 +213,21 @@ proc SetMetrics
 
     ret
     endp
+proc SetColumnsIntervals
 
+    mov eax, [CardHeight]
+    shr eax, 3
+    mov edx, 0
+    .startloop1:
+
+        mov [ColumnInterval + edx], eax
+
+    add edx, 4
+    cmp edx, 40
+    jne .startloop1
+
+    ret
+    endp
 proc CopyCards uses esi edi, Index, SoursColumn, DestColumn
 
     mov esi, [SoursColumn]
