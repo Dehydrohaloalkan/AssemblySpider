@@ -20,6 +20,7 @@ start:
     stdcall LoadImages
     stdcall SetColumnsLenght
     stdcall SetInitArrayDBG
+    stdcall SetCardsStartInfo
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0
@@ -75,7 +76,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
     .wmpaint:
 
-        stdcall SetCardsInformation
+        stdcall SetCardsPositions
 
         invoke BeginPaint, [hwnd], ps
         mov [hdc], eax

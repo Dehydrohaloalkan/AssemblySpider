@@ -107,14 +107,12 @@ proc SetColumnsLenght
     endp
 
 
-proc SetCardsInformation uses ebx esi edi
+proc SetCardsPositions uses ebx
 
     locals
         VerticalInterval    dd  ?
         Indent              dd  40
     endl
-
-    mov esi, [InitPt]
 
     mov eax, [RectClient.right]
     xor edx, edx
@@ -143,22 +141,6 @@ proc SetCardsInformation uses ebx esi edi
 
             mov [CardsPositionX + edx], eax
             mov [CardsPositionY + edx], ebx
-
-            cmp [InitFlag], 1
-            je .skip
-
-                mov edi, [InitArray + esi]
-                add esi, 4
-
-                cmp ecx, 1
-                je .lasttask
-
-                    add edi, 10h
-
-                .lasttask:
-                    mov [CardInfo + edx], edi
-            .skip:
-
             add ebx, [VerticalInterval]
             add edx, 4
 
@@ -171,8 +153,39 @@ proc SetCardsInformation uses ebx esi edi
     cmp edx, 10
     jnz .startloop1
 
+    ret
+    endp
+proc SetCardsStartInfo uses esi
+
+    mov esi, [InitPt]
+    mov ecx, 10
+    .startloop1:
+    push ecx
+
+        mov edx, ecx
+        dec edx
+        shl edx, 2
+        mov ecx, [ColumnLength + edx]
+        shl edx, 6
+
+        .startloop2:
+
+            mov eax, [InitArray + esi]
+            add eax, 10h
+            mov [CardInfo + edx], eax
+            add edx, 4
+            add esi, 4
+
+        loop .startloop2
+
+        mov eax, [CardInfo + edx - 4]
+        sub eax, 10h
+        mov [CardInfo + edx - 4], eax
+
+    pop ecx
+    loop .startloop1
+
     mov [InitPt], esi
-    mov [InitFlag], 1
 
     ret
     endp
