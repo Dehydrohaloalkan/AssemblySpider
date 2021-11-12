@@ -29,14 +29,24 @@ proc RandomGet wMin, wMax
 proc SetInitArrayDBG
 
     xor edx, edx
+    xor ecx, ecx
     mov eax, 1
     .startloop1:
 
         mov [edx + InitArray], eax
+        shl ecx, 5
+        add [edx + InitArray], ecx
+        shr ecx, 5
+
         inc eax
         cmp eax, 14
         jne .endloop1
         mov eax, 1
+
+        inc ecx
+        cmp ecx, 4
+        jne .endloop1
+        xor ecx, ecx
 
     .endloop1:
     add edx, 4
@@ -401,7 +411,6 @@ proc FindCard, XPos, YPos, Index, Column
 
         mov eax, [RectClient.right]
         mov edx, [CenterColumnInterval]
-        shr edx, 1
         sub eax, edx
         mov [TempRect.right], eax
 
@@ -412,7 +421,7 @@ proc FindCard, XPos, YPos, Index, Column
         je .noNew
         cmp eax, 0
         je .onecard
-            mov edx, 40
+            mov edx, [DownInterval]
             mul edx
             add eax, [CardWigth]
             jmp .loading
@@ -423,7 +432,7 @@ proc FindCard, XPos, YPos, Index, Column
         mov [TempRect.left], ecx
 
         mov eax, [RectClient.bottom]
-        sub eax, 40
+        sub eax, [Indent]
         mov [TempRect.bottom], eax
 
         sub eax, [CardHeight]
@@ -442,7 +451,7 @@ proc FindCard, XPos, YPos, Index, Column
     .finish:
     ret
     endp
-proc CheckMoving uses ebx, Index, Column
+proc CheckMoving uses ebx esi, Index, Column
 
     mov edx, [Column]
     shl edx, 2
@@ -461,6 +470,10 @@ proc CheckMoving uses ebx, Index, Column
     jc .canntmove
 
     mov eax, [edx]
+    shr eax, 5
+    mov esi, eax
+
+    mov eax, [edx]
     and eax, 0Fh
     mov ebx, eax
     add edx, 4
@@ -473,6 +486,11 @@ proc CheckMoving uses ebx, Index, Column
         and eax, 0Fh
         dec ebx
         cmp ebx, eax
+        jne .canntmove
+
+        mov eax, [edx]
+        shr eax, 5
+        cmp eax, esi
         jne .canntmove
 
     add edx, 4
@@ -583,7 +601,7 @@ proc PostCheckCards
 
     ret
     endp
-proc CheckSolveDeck uses ebx, Index
+proc CheckSolveDeck uses ebx esi, Index
 
     shl edx, 6
     dec eax
@@ -591,13 +609,14 @@ proc CheckSolveDeck uses ebx, Index
     add edx, eax
 
     mov ebx, [CardInfo + edx]
-    shr ebx, 4
-    cmp ebx, 1
-    je .finish
+    bt ebx, 4
+    jc .finish
     mov ebx, [CardInfo + edx]
     and ebx, 0Fh
     cmp ebx, 1
     jne .finish
+    mov esi, [CardInfo + edx]
+    shr esi, 5
     sub edx, 4
 
     mov ecx, 12
@@ -610,6 +629,10 @@ proc CheckSolveDeck uses ebx, Index
         and eax, 0Fh
         inc ebx
         cmp eax, ebx
+        jne .finish
+        mov eax, [CardInfo + edx]
+        shr eax, 5
+        cmp eax, esi
         jne .finish
 
         sub edx, 4
@@ -792,19 +815,20 @@ proc GetTextureCardIndex, Info
     bt eax, 4
     jc .closecard
 
+    mov edx, [Info]
+    shr edx, 5
+    mov eax, [hTextures + edx * 4 + 4]
+    mov [hNowCard], eax
+
     mov eax, [Info]
     and eax, 0Fh
     dec eax
-    mov edx, [Info]
-    shr edx, 5
-    add edx, [hTextures + 4]
-    mov [hNowCard], edx
     jmp .finish
 
     .closecard:
+        mov eax, [hTextures]
+        mov [hNowCard], eax
         xor eax, eax
-        mov edx, [hTextures]
-        mov [hNowCard], edx
 
     .finish:
     ret
