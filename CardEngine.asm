@@ -223,16 +223,42 @@ proc SetMetrics
     endp
 proc SetCardsIntervals
 
-    mov eax, [CardHeight]
-    shr eax, 3
-    mov edx, 0
+    mov ecx, 10
     .startloop1:
+    push ecx
 
-        mov [CardAfterInterval + edx], eax
+        mov edx, ecx
+        dec edx
+        shl edx, 2
+        mov ecx, [ColumnLength + edx]
+        shl edx, 6
+        cmp ecx, 0
+        je .endloop2
 
-    add edx, 4
-    cmp edx, 11*64*4
-    jne .startloop1
+        .startloop2:
+
+            mov eax, [CardInfo + edx]
+            bt eax, 4
+            jc .closecard
+
+                mov eax, [CardHeight]
+                shr eax, 2
+                mov [CardAfterInterval + edx], eax
+                jmp .finloop2
+
+            .closecard:
+
+                mov eax, [CardHeight]
+                shr eax, 3
+                mov [CardAfterInterval + edx], eax
+
+        .finloop2:
+            add edx, 4
+        loop .startloop2
+        .endloop2:
+
+    pop ecx
+    loop .startloop1
 
     ret
     endp
@@ -293,7 +319,7 @@ proc MoveCards, delX, delY
     .finish:
     ret
     endp
-proc AddNewCards uses ebx esi edi
+proc AddNewCards uses esi
 
     mov esi, [InitPt]
     mov ecx, 10
@@ -303,21 +329,13 @@ proc AddNewCards uses ebx esi edi
         dec edx
         shl edx, 2
         mov eax, [ColumnLength + edx]
-        mov edi, [ColumnInterval + edx]
         inc [ColumnLength + edx]
         shl edx, 6
         shl eax, 2
         add edx, eax
 
-        mov ebx, [CardsPositionX + edx - 4]
-        mov [CardsPositionX + edx], ebx
-
-        mov ebx, [CardsPositionY + edx - 4]
-        add ebx, edi
-        mov [CardsPositionY + edx], ebx
-
-        mov ebx, [InitArray + esi]
-        mov [CardInfo + edx], ebx
+        mov eax, [InitArray + esi]
+        mov [CardInfo + edx], eax
         add esi, 4
 
     loop .startloop1

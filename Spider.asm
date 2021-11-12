@@ -79,6 +79,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
     .wmpaint:
 
+        stdcall SetCardsIntervals
         stdcall SetCardsPositions
 
         invoke BeginPaint, [hwnd], ps

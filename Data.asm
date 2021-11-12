@@ -39,7 +39,6 @@ section '.gdata' data readable writeable
 
     CardHeight              dd      ?
     CardWigth               dd      ?
-    ColumnInterval          dd      11      dup     40
     CenterColumnInterval    dd      ?
     Indent                  dd      ?
     DownInterval            dd      ?
