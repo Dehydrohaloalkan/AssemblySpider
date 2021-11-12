@@ -457,9 +457,8 @@ proc CheckMoving uses ebx, Index, Column
     add edx, CardInfo
 
     mov eax, [edx]
-    shr eax, 4
-    cmp eax, 1
-    je .canntmove
+    bt eax, 4
+    jc .canntmove
 
     mov eax, [edx]
     and eax, 0Fh
@@ -572,9 +571,8 @@ proc PostCheckCards
             shl eax, 2
             add edx, eax
             mov eax, [CardInfo + edx]
-            shr eax, 4
-            cmp eax, 0
-            je .endloop1
+            bt eax, 4
+            jnc .endloop1
             mov eax, [CardInfo + edx]
             sub eax, 10h
             mov [CardInfo + edx], eax
@@ -606,9 +604,8 @@ proc CheckSolveDeck uses ebx, Index
     .startloop1:
 
         mov eax, [CardInfo + edx]
-        shr eax, 4
-        cmp eax, 1
-        je .finish
+        bt eax, 4
+        jc .finish
         mov eax, [CardInfo + edx]
         and eax, 0Fh
         inc ebx
@@ -793,9 +790,8 @@ proc DrawCard, hDC, left, top, index, hcard
 proc GetTextureCardIndex, Info
 
     mov eax, [Info]
-    shr eax, 4
-    cmp eax, 1
-    je .closecard
+    bt eax, 4
+    jc .closecard
 
     mov eax, [Info]
     and eax, 0Fh
