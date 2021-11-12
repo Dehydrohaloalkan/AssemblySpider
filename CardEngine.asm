@@ -687,7 +687,7 @@ proc DrawSolvingDecks, hDC
     .startloop1:
     push ecx
         stdcall GetTextureCardIndex, 13
-        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hCards]
+        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hNowCard]
         mov eax, [XPos]
         add eax, [DownInterval]
         mov [XPos], eax
@@ -721,8 +721,8 @@ proc DrawNewDecks, hDC
 
     .startloop1:
     push ecx
-        stdcall GetTextureCardIndex, 0
-        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hCards]
+        stdcall GetTextureCardIndex, 10h
+        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hNowCard]
         mov eax, [XPos]
         sub eax, [DownInterval]
         mov [XPos], eax
@@ -749,8 +749,7 @@ proc DrawCards, hDC
         push ecx edx edx
             stdcall GetTextureCardIndex, [CardInfo + edx]
             pop edx
-            stdcall DrawCard, [hDC], [CardsPositionX + edx], [CardsPositionY + edx], eax, [hCards]
-
+            stdcall DrawCard, [hDC], [CardsPositionX + edx], [CardsPositionY + edx], eax, [hNowCard]
         pop edx ecx
         add edx, 4
         loop .startloop2
@@ -795,10 +794,17 @@ proc GetTextureCardIndex, Info
 
     mov eax, [Info]
     and eax, 0Fh
+    dec eax
+    mov edx, [Info]
+    shr edx, 5
+    add edx, [hTextures + 4]
+    mov [hNowCard], edx
     jmp .finish
 
     .closecard:
         xor eax, eax
+        mov edx, [hTextures]
+        mov [hNowCard], edx
 
     .finish:
     ret

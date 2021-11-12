@@ -4,9 +4,15 @@ CardResolutionY = 96
 
 section '.cardst' data readable writeable
 
-    _texturename       TCHAR   'res\cards_hearts.bmp', 0
+    _TextureBack        TCHAR   'res\card_back.bmp', 0
+    _Texture1           TCHAR   'res\card_club.bmp', 0
+    _Texture2           TCHAR   'res\card_dimd.bmp', 0
+    _Texture3           TCHAR   'res\card_hert.bmp', 0
+    _Texture4           TCHAR   'res\card_spad.bmp', 0
+    TextureNameLen      dd      $ - _Texture4
 
-    hCards      dd      ?
+    hTextures           dd      5 dup ?
+    hNowCard            dd      ?
 
 section '.sdata' data readable writeable
 

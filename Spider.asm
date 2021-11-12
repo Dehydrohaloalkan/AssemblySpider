@@ -222,10 +222,23 @@ proc GetLHparam, LH, L, H
     ret
     endp
 
-proc LoadImages
+proc LoadImages uses edi
 
-    invoke LoadImage, [wc.hInstance], _texturename, IMAGE_BITMAP, CardResolutionX*14, CardResolutionY, LR_LOADFROMFILE
-    mov [hCards], eax
+    invoke LoadImage, [wc.hInstance], _TextureBack, IMAGE_BITMAP,\
+                      CardResolutionX, CardResolutionY, LR_LOADFROMFILE
+    mov [hTextures], eax
+    invoke LoadImage, [wc.hInstance], _Texture1, IMAGE_BITMAP,\
+                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
+    mov [hTextures + 4], eax
+    invoke LoadImage, [wc.hInstance], _Texture2, IMAGE_BITMAP,\
+                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
+    mov [hTextures + 8], eax
+    invoke LoadImage, [wc.hInstance], _Texture3, IMAGE_BITMAP,\
+                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
+    mov [hTextures + 12], eax
+    invoke LoadImage, [wc.hInstance], _Texture4, IMAGE_BITMAP,\
+                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
+    mov [hTextures + 16], eax
 
     ret
     endp
