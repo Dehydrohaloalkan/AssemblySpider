@@ -124,8 +124,6 @@ proc SetCardsPositions uses ebx
 
         shl edx, 2
         mov ecx, [ColumnLength + edx]
-        mov ebx, [ColumnInterval + edx]
-        mov [VerticalInterval], ebx
         mov ebx, [Indent]
         shl edx, 6
 
@@ -135,7 +133,7 @@ proc SetCardsPositions uses ebx
 
             mov [CardsPositionX + edx], eax
             mov [CardsPositionY + edx], ebx
-            add ebx, [VerticalInterval]
+            add ebx, [CardAfterInterval + edx]
             add edx, 4
 
         loop .startloop2
@@ -213,17 +211,17 @@ proc SetMetrics
 
     ret
     endp
-proc SetColumnsIntervals
+proc SetCardsIntervals
 
     mov eax, [CardHeight]
     shr eax, 3
     mov edx, 0
     .startloop1:
 
-        mov [ColumnInterval + edx], eax
+        mov [CardAfterInterval + edx], eax
 
     add edx, 4
-    cmp edx, 40
+    cmp edx, 11*64*4
     jne .startloop1
 
     ret
@@ -342,10 +340,6 @@ proc CheckEmptyColums
 
 proc FindCard, XPos, YPos, Index, Column
 
-    locals
-        ColumnInt   dd  ?
-    endl
-
     mov eax, [XPos]
     mov edx, [CenterColumnInterval]
     shr edx, 1
@@ -363,8 +357,6 @@ proc FindCard, XPos, YPos, Index, Column
     mov edx, eax
     shl edx, 2
     mov ecx, [ColumnLength + edx]
-    mov eax, [ColumnInterval + edx]
-    mov [ColumnInt], eax
     cmp ecx, 0
     je .nocard
     shl edx, 6
@@ -383,13 +375,15 @@ proc FindCard, XPos, YPos, Index, Column
     mov [TempRect.bottom], eax
 
     .startloop1:
-    push ecx
+    push ecx edx
 
         invoke PtInRect, TempRect, [XPos], [YPos]
+        pop edx
+        sub edx, 4
         cmp eax, 0
         jne .getinfo
         mov eax, [TempRect.top]
-        sub eax, [ColumnInt]
+        sub eax, [CardAfterInterval + edx]
         mov [TempRect.top], eax
 
     pop ecx

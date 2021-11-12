@@ -37,7 +37,7 @@ section '.gdata' data readable writeable
     ColumnInterval          dd      11      dup     40
     CenterColumnInterval    dd      ?
     Indent                  dd      ?
-    DownInterval            dd      ? 
+    DownInterval            dd      ?
 
     InitArray               dd      104     dup     ?
     InitPt                  dd      0
@@ -52,11 +52,12 @@ section '.gdata' data readable writeable
     OldColumn       dd      ?
 
 
-    IsMouseDown     dd      ?
-    ColumnLength    dd      11      dup     ?
-    CardsPositionX  dd      11*64   dup     ?
-    CardsPositionY  dd      11*64   dup     ?
-    CardInfo        dd      11*64   dup     ?
+    IsMouseDown         dd      ?
+    ColumnLength        dd      11      dup     ?
+    CardsPositionX      dd      11*64   dup     ?
+    CardsPositionY      dd      11*64   dup     ?
+    CardInfo            dd      11*64   dup     ?
+    CardAfterInterval   dd      11*64   dup     ?
 
 section '.idata' import data readable writeable
 
@@ -65,11 +66,8 @@ section '.idata' import data readable writeable
             gdi32,    'GDI32.DLL',\
             msimg32,  'msimg32.dll'
 
-
     import msimg32,\
        TransparentBlt, 'TransparentBlt'
-
-
 
     include 'api\kernel32.inc'
     include 'api\user32.inc'
