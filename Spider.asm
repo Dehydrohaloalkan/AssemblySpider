@@ -14,8 +14,10 @@ start:
     mov [wc.hCursor], eax
 
     invoke RegisterClass, wc
+    invoke LoadMenu, [wc.hInstance], GAME_MENU
+    mov [hmenu], eax
     invoke CreateWindowEx, 0, _class, _title, WS_VISIBLE+WS_SYSMENU+WS_SIZEBOX+WS_MAXIMIZEBOX+WS_MINIMIZEBOX,\
-           75, 0, 1850, 1080, NULL, NULL, [wc.hInstance], NULL
+           75, 0, 1850, 1080, NULL, eax, [wc.hInstance], NULL
 
     stdcall LoadImages
     stdcall SetColumnsLenght
@@ -246,3 +248,22 @@ proc LoadImages uses edi
 
 include 'CardEngine.asm'
 include 'Data.asm'
+
+IDM_NEW = 101
+IDM_RESTART = 102
+IDM_EXIT = 103
+IDM_ABOUT = 104
+GAME_MENU = 10
+
+
+section '.rsrc' resource data readable
+    directory RT_MENU, menus
+    resource menus, GAME_MENU, LANG_ENGLISH+SUBLANG_DEFAULT, main_menu
+    menu main_menu
+    menuitem '&Game', 0, MFR_POPUP
+        menuitem '&New', IDM_NEW
+        menuitem '&Restart', IDM_RESTART
+        menuseparator
+        menuitem 'E&xit', IDM_EXIT,MFR_END
+    menuitem '&Help', 0, MFR_POPUP + MFR_END
+        menuitem '&About...', IDM_ABOUT, MFR_END

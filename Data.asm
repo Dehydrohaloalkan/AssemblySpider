@@ -26,6 +26,7 @@ section '.sdata' data readable writeable
     msg     MSG
     font    LOGFONT 300, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
 
+    hmenu           dd      ?
     hbmpbuffer      dd      ?
     hdc             dd      ?
     hdcMem          dd      ?
