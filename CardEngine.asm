@@ -1,12 +1,6 @@
 
 section '.cardEn' code readable executable
 
-proc RandomInit
-
-     mov [RandPr], 13
-
-     ret
-     endp
 proc RandomGet wMin, wMax
 
      mov        eax, [RandPr]
@@ -24,9 +18,7 @@ proc RandomGet wMin, wMax
 
      ret
      endp
-
-
-proc SetInitArrayDBG
+proc SetInitArray uses esi edi, DeckCount, Seed, MixerCount
 
     xor edx, edx
     xor ecx, ecx
@@ -44,7 +36,7 @@ proc SetInitArrayDBG
         mov eax, 1
 
         inc ecx
-        cmp ecx, 4
+        cmp ecx, [DeckCount]
         jne .endloop1
         xor ecx, ecx
 
@@ -53,28 +45,12 @@ proc SetInitArrayDBG
     cmp edx, 104*4
     jne .startloop1
 
-    ret
-    endp
-proc SetInitArray uses esi edi
+    mov eax, [Seed]
+    cmp eax, 1
+    je .finish
+    mov [RandPr], eax
 
-    xor edx, edx
-    mov eax, 1
-    .startloop1:
-
-        mov [edx + InitArray], eax
-        inc eax
-        cmp eax, 14
-        jne .endloop1
-        mov eax, 1
-
-    .endloop1:
-    add edx, 4
-    cmp edx, 104*4
-    jne .startloop1
-
-    stdcall RandomInit
-
-    mov ecx, 50
+    mov ecx, [MixerCount]
     .startloop2:
     push ecx
 
@@ -93,7 +69,7 @@ proc SetInitArray uses esi edi
     pop ecx
     loop .startloop2
 
-
+    .finish:
     ret
     endp
 proc SetColumnsLenght

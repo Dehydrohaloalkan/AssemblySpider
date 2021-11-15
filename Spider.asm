@@ -21,7 +21,7 @@ start:
 
     stdcall LoadImages
     stdcall SetColumnsLenght
-    stdcall SetInitArrayDBG
+    stdcall SetInitArray, 1, 1, 100
     stdcall SetCardsStartInfo
 
     msg_loop:
