@@ -84,7 +84,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         je .paintstart
             stdcall GameStart, 1, 1, 0
         .paintstart:
-        
+
         invoke BeginPaint, [hwnd], ps
         mov [hdc], eax
 
@@ -133,6 +133,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             cmp eax, 0
             je .nomove
             stdcall AddNewCards
+            stdcall SetCardsIntervals
+            stdcall SetCardsPositions
             dec [NewDecksCount]
             jmp .finish
 
@@ -213,11 +215,11 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         je .idmexit
 
         .idmnew:
-            stdcall GameStart, 1, 1, 0
+            stdcall GameStart, 1, 1
             invoke InvalidateRect, [hwnd], NULL, 0
             jmp .finish
         .idmrestart:
-            stdcall GameStart, 1, 1, 1
+            stdcall GameStart, 1, 1
             invoke InvalidateRect, [hwnd], NULL, 0
             jmp .finish
         .idmexit:

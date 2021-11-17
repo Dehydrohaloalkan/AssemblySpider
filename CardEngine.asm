@@ -93,20 +93,17 @@ proc SetColumnsLenght
 
     ret
     endp
-proc GameStart, Seed, DeckCount, Restart
+proc GameStart, Seed, DeckCount
 
-    stdcall SetColumnsLenght
-    cmp [Restart], 1
-    je .other
-    stdcall SetInitArray, [DeckCount], [Seed], MIXER
-    .other:
-    stdcall SetCardsStartInfo
-    stdcall SetCardsIntervals
-    stdcall SetCardsPositions
     mov [IsGame], 1
     mov [InitPt], 0
     mov [SolvingDecksCount], 0
     mov [NewDecksCount], 5
+    stdcall SetColumnsLenght
+    stdcall SetInitArray, [DeckCount], [Seed], MIXER
+    stdcall SetCardsStartInfo
+    stdcall SetCardsIntervals
+    stdcall SetCardsPositions
 
     ret
     endp
@@ -235,6 +232,12 @@ proc SetMetrics
     endp
 proc SetCardsIntervals
 
+    locals
+        OpenInterval    dd  ?
+        CloseInterval   dd  ?
+        Workspace       dd  ?
+    endl
+
     mov ecx, 10
     .startloop1:
     push ecx
@@ -245,32 +248,72 @@ proc SetCardsIntervals
         mov ecx, [ColumnLength + edx]
         shl edx, 6
         cmp ecx, 0
-        je .endloop2
+        je .endloop3
 
-        .startloop2:
+        push edx ecx
 
+            mov eax, [CardHeight]
+            shr eax, 2
+            mov [OpenInterval], eax
+            shr eax, 1
+            mov [CloseInterval], eax
+
+            xor edx, edx
+            .startloop2:
+                mov eax, [CardInfo + edx]
+                add edx, 2
+                bt eax, 4
+                sbb edx, 0
+            loop .startloop2
+            add edx, 10
+
+            push edx
+
+                mov eax, [RectClient.bottom]
+                shr eax, 2
+                mov ecx, 3
+                xor edx, edx
+                mul ecx
+                mov [Workspace], eax
+
+                mov eax, [CloseInterval]
+                pop ecx
+                push ecx
+                xor edx, edx
+                mul ecx
+
+                pop ecx
+                cmp eax, [Workspace]
+                jl .endcalculate
+
+                mov eax, [Workspace]
+                xor edx, edx
+                div ecx
+                mov [CloseInterval], eax
+                shl eax, 1
+                mov [OpenInterval], eax
+
+        .endcalculate:
+        pop ecx edx
+
+        .startloop3:
             mov eax, [CardInfo + edx]
             bt eax, 4
             jc .closecard
-
-                mov eax, [CardHeight]
-                shr eax, 2
+                mov eax, [OpenInterval]
                 mov [CardAfterInterval + edx], eax
-                jmp .finloop2
-
+                jmp .finloop3
             .closecard:
-
-                mov eax, [CardHeight]
-                shr eax, 3
+                mov eax, [CloseInterval]
                 mov [CardAfterInterval + edx], eax
-
-        .finloop2:
-            add edx, 4
-        loop .startloop2
-        .endloop2:
+            .finloop3:
+                add edx, 4
+        loop .startloop3
+        .endloop3:
 
     pop ecx
-    loop .startloop1
+    dec ecx
+    jnz .startloop1
 
     ret
     endp
