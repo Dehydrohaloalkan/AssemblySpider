@@ -18,6 +18,8 @@ proc RandomGet wMin, wMax
 
      ret
      endp
+
+
 proc SetInitArray uses esi edi, DeckCount, Seed, MixerCount
 
     xor edx, edx
@@ -704,7 +706,7 @@ proc DrawSolvingDecks, hDC
     .startloop1:
     push ecx
         stdcall GetTextureCardIndex, 13
-        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hNowCard]
+        stdcall DrawCard, [hDC], [XPos], [YPos]
         mov eax, [XPos]
         add eax, [DownInterval]
         mov [XPos], eax
@@ -739,7 +741,7 @@ proc DrawNewDecks, hDC
     .startloop1:
     push ecx
         stdcall GetTextureCardIndex, 10h
-        stdcall DrawCard, [hDC], [XPos], [YPos], eax, [hNowCard]
+        stdcall DrawCard, [hDC], [XPos], [YPos]
         mov eax, [XPos]
         sub eax, [DownInterval]
         mov [XPos], eax
@@ -766,7 +768,7 @@ proc DrawCards, hDC
         push ecx edx edx
             stdcall GetTextureCardIndex, [CardInfo + edx]
             pop edx
-            stdcall DrawCard, [hDC], [CardsPositionX + edx], [CardsPositionY + edx], eax, [hNowCard]
+            stdcall DrawCard, [hDC], [CardsPositionX + edx], [CardsPositionY + edx]
         pop edx ecx
         add edx, 4
         loop .startloop2
@@ -779,26 +781,34 @@ proc DrawCards, hDC
 
     ret
     endp
-proc DrawCard, hDC, left, top, index, hcard
+proc DrawCard, hDC, left, top
 
     locals
         hCardDC dd  ?
+        Line    dd  ?
     endl
 
     invoke CreateCompatibleDC, [hDC]
     mov [hCardDC], eax
-    invoke SelectObject, [hCardDC], [hcard]
-    mov [hcard], eax
+    invoke SelectObject, [hCardDC], [hTextures]
+    mov [hTextures], eax
 
-    mov eax, [index]
+    mov eax, [TextureLine]
+    mov edx, CardResolutionY
+    mul edx
+    mov [Line], eax
+
+    mov eax, [TextureIndex]
     mov edx, CardResolutionX
     mul edx
 
+
     invoke TransparentBlt, [hDC], [left], [top], [CardWigth], [CardHeight], \
-                         [hCardDC], eax, 0, CardResolutionX, CardResolutionY, 00FF8080h
+                         [hCardDC], eax, [Line], CardResolutionX, CardResolutionY, 00FF8080h
 
 
-    invoke SelectObject, [hCardDC], [hcard]
+    invoke SelectObject, [hCardDC], [hTextures]
+    mov [hTextures], eax
     invoke DeleteDC, [hCardDC]
 
     ret
@@ -811,18 +821,18 @@ proc GetTextureCardIndex, Info
 
     mov edx, [Info]
     shr edx, 5
-    mov eax, [hTextures + edx * 4 + 4]
-    mov [hNowCard], eax
+    mov [TextureLine], edx
 
     mov eax, [Info]
     and eax, 0Fh
     dec eax
+    mov [TextureIndex], eax
     jmp .finish
 
     .closecard:
-        mov eax, [hTextures]
-        mov [hNowCard], eax
-        xor eax, eax
+        mov [TextureLine], 4
+        mov eax, [BackCardIndex]
+        mov [TextureIndex], eax
 
     .finish:
     ret

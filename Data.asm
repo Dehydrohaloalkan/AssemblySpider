@@ -4,14 +4,11 @@ CardResolutionY = 96
 
 section '.cardst' data readable writeable
 
-    _TextureBack        TCHAR   'res\card_back.bmp', 0
-    _Texture1           TCHAR   'res\card_spad.bmp', 0
-    _Texture2           TCHAR   'res\card_hert.bmp', 0
-    _Texture3           TCHAR   'res\card_club.bmp', 0
-    _Texture4           TCHAR   'res\card_dimd.bmp', 0
-
-    hTextures           dd      5 dup ?
-    hNowCard            dd      ?
+    _Texture            TCHAR   'res\cards.bmp', 0
+    hTextures           dd      ?
+    TextureLine         dd      ?
+    TextureIndex        dd      ?
+    BackCardIndex       dd      0
 
 section '.sdata' data readable writeable
 
@@ -72,8 +69,26 @@ section '.idata' import data readable writeable
             msimg32,  'msimg32.dll'
 
     import msimg32,\
-       TransparentBlt, 'TransparentBlt'
+            TransparentBlt, 'TransparentBlt'
 
     include 'api\kernel32.inc'
     include 'api\user32.inc'
     include 'api\gdi32.inc'
+
+IDM_NEW = 101
+IDM_RESTART = 102
+IDM_EXIT = 103
+IDM_ABOUT = 104
+GAME_MENU = 10
+
+section '.rsrc' resource data readable
+    directory RT_MENU, menus
+    resource menus, GAME_MENU, LANG_ENGLISH+SUBLANG_DEFAULT, main_menu
+    menu main_menu
+    menuitem '&Game', 0, MFR_POPUP
+        menuitem '&New', IDM_NEW
+        menuitem '&Restart', IDM_RESTART
+        menuseparator
+        menuitem 'E&xit', IDM_EXIT,MFR_END
+    menuitem '&Help', 0, MFR_POPUP + MFR_END
+        menuitem '&About...', IDM_ABOUT, MFR_END

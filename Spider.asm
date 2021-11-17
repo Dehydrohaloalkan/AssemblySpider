@@ -227,43 +227,12 @@ proc GetLHparam, LH, L, H
 
 proc LoadImages uses edi
 
-    invoke LoadImage, [wc.hInstance], _TextureBack, IMAGE_BITMAP,\
-                      CardResolutionX, CardResolutionY, LR_LOADFROMFILE
+    invoke LoadImage, [wc.hInstance], _Texture, IMAGE_BITMAP,\
+                      CardResolutionX * 13, CardResolutionY * 5, LR_LOADFROMFILE
     mov [hTextures], eax
-    invoke LoadImage, [wc.hInstance], _Texture1, IMAGE_BITMAP,\
-                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
-    mov [hTextures + 4], eax
-    invoke LoadImage, [wc.hInstance], _Texture2, IMAGE_BITMAP,\
-                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
-    mov [hTextures + 8], eax
-    invoke LoadImage, [wc.hInstance], _Texture3, IMAGE_BITMAP,\
-                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
-    mov [hTextures + 12], eax
-    invoke LoadImage, [wc.hInstance], _Texture4, IMAGE_BITMAP,\
-                      CardResolutionX*13, CardResolutionY, LR_LOADFROMFILE
-    mov [hTextures + 16], eax
 
     ret
     endp
 
 include 'CardEngine.asm'
 include 'Data.asm'
-
-IDM_NEW = 101
-IDM_RESTART = 102
-IDM_EXIT = 103
-IDM_ABOUT = 104
-GAME_MENU = 10
-
-
-section '.rsrc' resource data readable
-    directory RT_MENU, menus
-    resource menus, GAME_MENU, LANG_ENGLISH+SUBLANG_DEFAULT, main_menu
-    menu main_menu
-    menuitem '&Game', 0, MFR_POPUP
-        menuitem '&New', IDM_NEW
-        menuitem '&Restart', IDM_RESTART
-        menuseparator
-        menuitem 'E&xit', IDM_EXIT,MFR_END
-    menuitem '&Help', 0, MFR_POPUP + MFR_END
-        menuitem '&About...', IDM_ABOUT, MFR_END
