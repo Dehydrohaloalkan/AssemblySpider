@@ -20,9 +20,6 @@ start:
            75, 0, 1850, 1080, NULL, eax, [wc.hInstance], NULL
 
     stdcall LoadImages
-    stdcall SetColumnsLenght
-    stdcall SetInitArray, 1, 1, 100
-    stdcall SetCardsStartInfo
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0
@@ -51,11 +48,12 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmlbuttonup
     cmp [wmsg], WM_GETMINMAXINFO
     je .wmgetminmaxinfo
+    cmp [wmsg], WM_COMMAND
+    je .wmcommand
 
     .defwndproc:
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
         jmp .finish
-
     .wmsize:
         mov eax, [hbmpbuffer]
         cmp eax, 0
@@ -76,13 +74,11 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         stdcall SetCardsIntervals
 
         invoke DeleteDC, [hdc]
-        invoke InvalidateRect, [hwnd], NULL, 0
-        jmp .finish
-
-    .wmpaint:
-
         stdcall SetCardsIntervals
         stdcall SetCardsPositions
+        invoke InvalidateRect, [hwnd], NULL, 0
+        jmp .finish
+    .wmpaint:
 
         invoke BeginPaint, [hwnd], ps
         mov [hdc], eax
@@ -99,7 +95,6 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke DeleteDC, [hdcMem]
         invoke EndPaint, [hwnd], ps
         jmp .finish
-
     .wmlbuttondown:
         mov [IsMouseDown], 1
         push TempColumn
@@ -138,7 +133,6 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         .nomove:
             jmp .finish
-
     .wmmousemove:
         mov eax, [IsMouseDown]
         cmp eax, 0
@@ -160,7 +154,6 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         invoke InvalidateRect, [hwnd], NULL, 0
         jmp .finish
-
     .wmlbuttonup:
         mov [IsMouseDown], 0
 
@@ -189,10 +182,11 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         .theend:
             stdcall PostCheckCards
+            stdcall SetCardsIntervals
+            stdcall SetCardsPositions
             invoke InvalidateRect, [hwnd], NULL, 0
 
         jmp .finish
-
     .wmgetminmaxinfo:
 
         mov edx, [lparam]
@@ -201,7 +195,27 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         mov DWORD [edx + 4], 800
 
         jmp .finish
+    .wmcommand:
 
+        mov eax, [wparam]
+        and eax, 0FFFFh
+
+        cmp eax, IDM_NEW
+        je .idmnew
+        cmp eax, IDM_RESTART
+        je .idmrestart
+        cmp eax, IDM_EXIT
+        je .idmexit
+
+        .idmnew:
+            stdcall GameStart, 1, 1, 0
+            invoke InvalidateRect, [hwnd], NULL, 0
+            jmp .finish
+        .idmrestart:
+            stdcall GameStart, 1, 1, 1
+            invoke InvalidateRect, [hwnd], NULL, 0
+            jmp .finish
+        .idmexit:
     .wmdestroy:
         invoke PostQuitMessage,0
         xor eax, eax

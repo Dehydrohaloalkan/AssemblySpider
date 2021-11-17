@@ -93,7 +93,23 @@ proc SetColumnsLenght
 
     ret
     endp
+proc GameStart, Seed, DeckCount, Restart
 
+    stdcall SetColumnsLenght
+    cmp [Restart], 1
+    je .other
+    stdcall SetInitArray, [DeckCount], [Seed], MIXER
+    .other:
+    stdcall SetCardsStartInfo
+    stdcall SetCardsIntervals
+    stdcall SetCardsPositions
+    mov [IsGame], 1
+    mov [InitPt], 0
+    mov [SolvingDecksCount], 0
+    mov [NewDecksCount], 5
+
+    ret
+    endp
 
 proc SetCardsPositions uses ebx
 
@@ -183,6 +199,21 @@ proc SetMetrics
     shl eax, 2
     mov [CardHeight], eax
 
+    mov eax, [RectClient.bottom]
+    xor edx, edx
+    mov ecx, 6
+    div ecx
+    cmp eax, [CardHeight]
+    jg .othermetrics
+
+    mov [CardHeight], eax
+
+    shr eax, 2
+    mov edx, 3
+    mul edx
+    mov [CardWigth], eax
+
+    .othermetrics:
     mov eax, [RectClient.right]
     xor edx, edx
     mov ebx, 11
@@ -651,6 +682,9 @@ proc DrawMap, hDC
     invoke CreateSolidBrush, 006AD8FFh
     push eax
     invoke FillRect, [hDC], RectClient, eax
+
+    cmp [IsGame], 0
+    je .finish
 
     stdcall DrawSolvingDecks, [hDC]
     stdcall DrawNewDecks, [hDC]

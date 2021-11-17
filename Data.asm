@@ -1,6 +1,7 @@
 
 CardResolutionX = 71
 CardResolutionY = 96
+MIXER           = 100
 
 section '.cardst' data readable writeable
 
@@ -35,6 +36,8 @@ section '.sdata' data readable writeable
 
 section '.gdata' data readable writeable
 
+    IsGame                  dd      ?
+
     CardHeight              dd      ?
     CardWigth               dd      ?
     CenterColumnInterval    dd      ?
@@ -42,9 +45,9 @@ section '.gdata' data readable writeable
     DownInterval            dd      ?
 
     InitArray               dd      104     dup     ?
-    InitPt                  dd      0
-    SolvingDecksCount       dd      0
-    NewDecksCount           dd      5
+    InitPt                  dd      ?
+    SolvingDecksCount       dd      ?
+    NewDecksCount           dd      ?
 
     saveX           dd      ?
     saveY           dd      ?
