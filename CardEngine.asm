@@ -132,7 +132,7 @@ proc SetCardsPositions uses ebx
         shl edx, 6
 
         test ecx, ecx
-        jz .endloop2
+        jz .emptycolmn
         .startloop2:
 
             mov [CardsPositionX + edx], eax
@@ -141,6 +141,9 @@ proc SetCardsPositions uses ebx
             add edx, 4
 
         loop .startloop2
+        jmp .endloop2
+        .emptycolmn:
+            mov [CardsPositionX + edx], eax
         .endloop2:
         add eax, [CenterColumnInterval]
 
@@ -796,8 +799,8 @@ proc DrawCards, hDC
         mov ecx, [ColumnLength + edx]
         shl edx, 6
 
-        test ecx, ecx
-        jz .endloop2
+        cmp ecx, 0
+        je .emptycolmn
         .startloop2:
         push ecx edx edx
             stdcall GetTextureCardIndex, [CardInfo + edx]
@@ -806,8 +809,14 @@ proc DrawCards, hDC
         pop edx ecx
         add edx, 4
         loop .startloop2
+        jmp .endloop2
+        .emptycolmn:
+            pop ecx
+            push ecx
+            cmp ecx, 10
+            je .endloop2
+            stdcall DrawEmptyColumnRect, [hDC], edx
         .endloop2:
-
     pop ecx
     inc ecx
     cmp ecx, 11
@@ -844,6 +853,43 @@ proc DrawCard, hDC, left, top
     invoke SelectObject, [hCardDC], [hTextures]
     mov [hTextures], eax
     invoke DeleteDC, [hCardDC]
+
+    ret
+    endp
+proc DrawEmptyColumnRect, hDC, index
+
+    locals
+        hbruh   dd  ?
+        hpen    dd  ?
+    endl
+
+    invoke CreateSolidBrush, 0054ACCCh
+    invoke SelectObject, [hDC], eax
+    mov [hbruh], eax
+
+    invoke CreatePen, PS_SOLID, 3, 00000000h
+    invoke SelectObject, [hDC], eax
+    mov [hpen], eax
+
+    push 10 10
+
+    mov eax, [Indent]
+    add eax, [CardHeight]
+    push eax
+
+    mov edx, [index]
+    mov eax, [CardsPositionX + edx]
+    add eax, [CardWigth]
+    push eax
+
+    push [Indent]
+    push [CardsPositionX + edx]
+    invoke RoundRect, [hDC]
+
+    invoke SelectObject, [hDC], [hpen]
+    invoke DeleteObject, eax
+    invoke SelectObject, [hDC], [hbruh]
+    invoke DeleteObject, eax
 
     ret
     endp

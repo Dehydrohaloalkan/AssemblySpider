@@ -80,6 +80,11 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
     .wmpaint:
 
+        cmp [IsGame], 1
+        je .paintstart
+            stdcall GameStart, 1, 1, 0
+        .paintstart:
+        
         invoke BeginPaint, [hwnd], ps
         mov [hdc], eax
 

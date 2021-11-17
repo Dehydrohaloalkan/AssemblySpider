@@ -1,6 +1,6 @@
 
-CardResolutionX = 71
-CardResolutionY = 96
+CardResolutionX = 71 * 2
+CardResolutionY = 96 * 2
 MIXER           = 100
 
 section '.cardst' data readable writeable
@@ -9,7 +9,7 @@ section '.cardst' data readable writeable
     hTextures           dd      ?
     TextureLine         dd      ?
     TextureIndex        dd      ?
-    BackCardIndex       dd      0
+    BackCardIndex       dd      1
 
 section '.sdata' data readable writeable
 
