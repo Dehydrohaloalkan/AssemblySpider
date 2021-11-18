@@ -2,6 +2,7 @@
 CardResolutionX = 71 * 2
 CardResolutionY = 96 * 2
 MIXER           = 100
+BCKCOLOR        = 0053771Bh
 
 section '.cardst' data readable writeable
 
@@ -9,7 +10,7 @@ section '.cardst' data readable writeable
     hTextures           dd      ?
     TextureLine         dd      ?
     TextureIndex        dd      ?
-    BackCardIndex       dd      1
+    BackCardIndex       dd      8
 
 section '.sdata' data readable writeable
 
@@ -17,12 +18,12 @@ section '.sdata' data readable writeable
     _title      TCHAR 'Spider', 0
     _text       TCHAR 'DISPLAY', 0
     _name       TCHAR 'res\Card.bmp', 0
-    _winstr     TCHAR 'you win', 0
-    winstrlen   dd    7
+    _winstr     TCHAR 'respect +', 0
+    winstrlen   dd    9
 
     wc      WNDCLASS 0, WindowProc, 0, 0, NULL, NULL, NULL, COLOR_BTNFACE + 1, NULL, _class
     msg     MSG
-    font    LOGFONT 300, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
+    font    LOGFONT 35, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
 
     hmenu           dd      ?
     hbmpbuffer      dd      ?
@@ -37,6 +38,9 @@ section '.sdata' data readable writeable
 section '.gdata' data readable writeable
 
     IsGame                  dd      ?
+    Points                  dd      ?
+    PointsStr               db      'Points: 500', 0, 0
+    PointsStrLen            dd      ?
 
     CardHeight              dd      ?
     CardWigth               dd      ?

@@ -18,6 +18,51 @@ proc RandomGet wMin, wMax
 
      ret
      endp
+proc IntToStr Num, String
+
+    locals
+        Len dd  0
+    endl
+
+    mov eax, [Num]
+    mov ecx, 10
+    cmp eax, 0
+    jnl .calculate
+        mov eax, 0
+
+    .calculate:
+        cmp eax, 0
+        je .endcalculate
+
+        xor edx, edx
+        div ecx
+        push edx
+        inc [Len]
+        jmp .calculate
+
+    .endcalculate:
+
+    mov ecx, [Len]
+    add ecx, 9
+    mov [PointsStrLen], ecx
+    sub ecx, 9
+    mov edx, [String]
+    cmp ecx, 0
+    je .endloop1
+    .startloop1:
+
+        pop eax
+        add eax, '0'
+        mov byte [edx], al
+        inc edx
+
+    loop .startloop1
+    .endloop1:
+
+    mov byte [edx], 0
+
+    ret
+    endp
 
 
 proc SetInitArray uses esi edi, DeckCount, Seed, MixerCount
@@ -99,6 +144,8 @@ proc GameStart, Seed, DeckCount
     mov [InitPt], 0
     mov [SolvingDecksCount], 0
     mov [NewDecksCount], 5
+    mov [Points], 500
+    mov [font.lfHeight], 35
     stdcall SetColumnsLenght
     stdcall SetInitArray, [DeckCount], [Seed], MIXER
     stdcall SetCardsStartInfo
@@ -717,6 +764,7 @@ proc CheckSolveDeck uses ebx esi, Index
     shl edx, 2
     sub [ColumnLength + edx], 13
     inc [SolvingDecksCount]
+    add [Points], 100
 
     .finish:
     ret
@@ -725,7 +773,7 @@ proc CheckSolveDeck uses ebx esi, Index
 
 proc DrawMap, hDC
 
-    invoke CreateSolidBrush, 006AD8FFh
+    invoke CreateSolidBrush, BCKCOLOR
     push eax
     invoke FillRect, [hDC], RectClient, eax
 
@@ -734,6 +782,27 @@ proc DrawMap, hDC
 
     stdcall DrawSolvingDecks, [hDC]
     stdcall DrawNewDecks, [hDC]
+
+        invoke SetTextAlign, [hDC], TA_CENTER + TA_BOTTOM
+        invoke SetBkMode, [hDC], TRANSPARENT
+        invoke CreateFontIndirect, font
+        push eax
+        invoke SelectObject, [hDC], eax
+
+        stdcall IntToStr, [Points], PointsStr + 8
+
+        push [PointsStrLen]
+        push PointsStr
+        mov eax, [RectClient.bottom]
+        sub eax, [DownInterval]
+        push eax
+        mov eax, [RectClient.right]
+        shr eax, 1
+        invoke TextOut, [hDC], eax
+
+        pop eax
+        invoke DeleteObject, eax
+
     stdcall DrawCards, [hDC]
 
     mov eax, [SolvingDecksCount]
@@ -742,6 +811,7 @@ proc DrawMap, hDC
 
         invoke SetTextAlign, [hDC], TA_CENTER + TA_BASELINE
         invoke SetBkMode, [hDC], TRANSPARENT
+        mov [font.lfHeight], 300
         invoke CreateFontIndirect, font
         push eax
         invoke SelectObject, [hDC], eax
@@ -906,7 +976,9 @@ proc DrawEmptyColumnRect, hDC, index
         hpen    dd  ?
     endl
 
-    invoke CreateSolidBrush, 0054ACCCh
+    mov eax, BCKCOLOR
+    and eax, 00B0B0B0h
+    invoke CreateSolidBrush, eax
     invoke SelectObject, [hDC], eax
     mov [hbruh], eax
 

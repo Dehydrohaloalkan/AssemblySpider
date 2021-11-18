@@ -182,6 +182,10 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         je .moveback
 
             stdcall CopyCards, 0, 10, [TempColumn]
+            mov eax, [TempColumn]
+            cmp eax, [OldColumn]
+            je .theend
+            dec [Points]
             jmp .theend
 
         .moveback:
