@@ -43,9 +43,9 @@ proc IntToStr Num, String
     .endcalculate:
 
     mov ecx, [Len]
-    add ecx, 9
+    add ecx, 8
     mov [PointsStrLen], ecx
-    sub ecx, 9
+    sub ecx, 8
     mov edx, [String]
     cmp ecx, 0
     je .endloop1
@@ -60,6 +60,15 @@ proc IntToStr Num, String
     .endloop1:
 
     mov byte [edx], 0
+
+    ret
+    endp
+proc CopyStr uses esi edi, Dest, Sours
+
+    mov ecx, 35
+    mov edi, [Dest]
+    mov esi, [Sours]
+    repnz movsb
 
     ret
     endp

@@ -20,6 +20,7 @@ start:
            75, 0, 1850, 1080, NULL, eax, [wc.hInstance], NULL
 
     stdcall LoadImages
+    stdcall CopyStr, font.lfFaceName, _fontname
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0
@@ -252,8 +253,7 @@ proc GetLHparam, LH, L, H
 
 proc LoadImages uses edi
 
-    invoke LoadImage, [wc.hInstance], _Texture, IMAGE_BITMAP,\
-                      CardResolutionX * 13, CardResolutionY * 5, LR_LOADFROMFILE
+    invoke LoadImage, [wc.hInstance], _Texture, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE
     mov [hTextures], eax
 
     ret

@@ -10,7 +10,7 @@ section '.cardst' data readable writeable
     hTextures           dd      ?
     TextureLine         dd      ?
     TextureIndex        dd      ?
-    BackCardIndex       dd      8
+    BackCardIndex       dd      9
 
 section '.sdata' data readable writeable
 
@@ -18,6 +18,7 @@ section '.sdata' data readable writeable
     _title      TCHAR 'Spider', 0
     _text       TCHAR 'DISPLAY', 0
     _name       TCHAR 'res\Card.bmp', 0
+    _fontname   TCHAR 'JetBrains Mono', 0
     _winstr     TCHAR 'respect +', 0
     winstrlen   dd    9
 
