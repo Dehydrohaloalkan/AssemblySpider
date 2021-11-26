@@ -1,8 +1,17 @@
 
-CardResolutionX = 71 * 2
-CardResolutionY = 96 * 2
-MIXER           = 100
-BCKCOLOR        = 0053771Bh
+CARD_RESOLUTION_X   = 71 * 2
+CARD_RESOLUTION_Y   = 96 * 2
+MIXER               = 100
+
+GAME_BCK_COLOR      = 0053771Bh
+PERS_BCK_COLOR      = 0042CDFFh
+
+PERS_X_COUNT        = 4
+PERS_Y_COUNT        = 3
+PERS_INDENT         = 30
+PERS_FONT           = 40
+PERS_X              = PERS_X_COUNT * CARD_RESOLUTION_X + (PERS_X_COUNT + 1) * PERS_INDENT
+PERS_Y              = PERS_Y_COUNT * CARD_RESOLUTION_Y + (PERS_Y_COUNT + 1) * PERS_INDENT + PERS_FONT
 
 section '.cardst' data readable writeable
 
@@ -10,21 +19,31 @@ section '.cardst' data readable writeable
     hTextures           dd      ?
     TextureLine         dd      ?
     TextureIndex        dd      ?
-    BackCardIndex       dd      9
+    BackCardIndex       dd      0
 
 section '.sdata' data readable writeable
 
     _class      TCHAR 'MainForm', 0
+    _perscl     TCHAR 'PersForm', 0
     _title      TCHAR 'Spider', 0
+    _perstitle  TCHAR 'Personalize', 0
     _text       TCHAR 'DISPLAY', 0
     _name       TCHAR 'res\Card.bmp', 0
-    _fontname   TCHAR 'JetBrains Mono', 0
-    _winstr     TCHAR 'respect +', 0
-    winstrlen   dd    9
 
-    wc      WNDCLASS 0, WindowProc, 0, 0, NULL, NULL, NULL, COLOR_BTNFACE + 1, NULL, _class
-    msg     MSG
-    font    LOGFONT 35, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
+    _fontname   TCHAR 'Ink Free', 0
+    _persfont   TCHAR 'Consolas', 0
+
+    _persstr    TCHAR 'Choosing a card back:', 0
+    _winstr     TCHAR 'You Win!', 0
+    winstrlen   dd    8
+
+    wc          WNDCLASS 0, WindowProc, 0, 0, NULL, NULL, NULL, COLOR_BTNFACE + 1, NULL, _class
+    pc          WNDCLASS 0, PersProc, 0, 0, NULL, NULL, NULL, COLOR_BTNFACE + 1, NULL, _perscl
+    msg         MSG
+    font        LOGFONT 35, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
+
+    hwndMain        dd      ?
+    hwndPers        dd      ?
 
     hmenu           dd      ?
     hbmpbuffer      dd      ?
@@ -34,6 +53,7 @@ section '.sdata' data readable writeable
     LowWord         dd      ?
     RandPr          dd      ?
     RectClient      RECT
+    RectPers        RECT
     ps              PAINTSTRUCT
 
 section '.gdata' data readable writeable
@@ -87,6 +107,7 @@ IDM_NEW = 101
 IDM_RESTART = 102
 IDM_EXIT = 103
 IDM_ABOUT = 104
+IDM_PERS = 105
 GAME_MENU = 10
 
 section '.rsrc' resource data readable
@@ -98,5 +119,6 @@ section '.rsrc' resource data readable
         menuitem '&Restart', IDM_RESTART
         menuseparator
         menuitem 'E&xit', IDM_EXIT,MFR_END
-    menuitem '&Help', 0, MFR_POPUP + MFR_END
+    menuitem '&Help', 0, MFR_POPUP
         menuitem '&About...', IDM_ABOUT, MFR_END
+    menuitem '&Personalize', IDM_PERS, MFR_END

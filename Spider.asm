@@ -8,16 +8,21 @@ section '.code' code readable executable
 start:
     invoke GetModuleHandle, 0
     mov [wc.hInstance], eax
+    mov [pc.hInstance], eax
     invoke LoadIcon, 0, IDI_APPLICATION
     mov [wc.hIcon], eax
+    mov [pc.hIcon], eax
     invoke  LoadCursor, 0, IDC_ARROW
     mov [wc.hCursor], eax
+    mov [pc.hCursor], eax
 
     invoke RegisterClass, wc
+    invoke RegisterClass, pc
     invoke LoadMenu, [wc.hInstance], GAME_MENU
     mov [hmenu], eax
     invoke CreateWindowEx, 0, _class, _title, WS_VISIBLE+WS_SYSMENU+WS_SIZEBOX+WS_MAXIMIZEBOX+WS_MINIMIZEBOX,\
            75, 0, 1850, 1080, NULL, eax, [wc.hInstance], NULL
+    mov [hwndMain], eax
 
     stdcall LoadImages
     stdcall CopyStr, font.lfFaceName, _fontname
@@ -83,7 +88,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         cmp [IsGame], 1
         je .paintstart
-            stdcall GameStart, 1, 1, 0
+            stdcall GameStart, 1, 1
         .paintstart:
 
         invoke BeginPaint, [hwnd], ps
@@ -178,6 +183,10 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         cmp eax, 0
         je .moveback
 
+        mov eax, [ColumnLength + 10 * 4]
+        cmp eax, 0
+        je .theend
+
         stdcall CheckPlacing, [TempColumn]
         cmp eax, 0
         je .moveback
@@ -218,6 +227,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         je .idmrestart
         cmp eax, IDM_EXIT
         je .idmexit
+        cmp eax, IDM_PERS
+        je .idmpers
 
         .idmnew:
             stdcall GameStart, 1, 1
@@ -227,10 +238,68 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             stdcall GameStart, 1, 1
             invoke InvalidateRect, [hwnd], NULL, 0
             jmp .finish
+        .idmpers:
+            mov [RectPers.top], 0
+            mov [RectPers.left], 0
+            mov [RectPers.right], PERS_X
+            mov [RectPers.bottom], PERS_Y
+
+            invoke AdjustWindowRect, RectPers, WS_VISIBLE+WS_SYSMENU, 1
+
+            mov eax, [RectPers.left]
+            sub [RectPers.right], eax
+            mov eax, [RectPers.top]
+            sub [RectPers.bottom], eax
+
+            invoke CreateWindowEx, 0, _perscl, _perstitle, WS_VISIBLE+WS_SYSMENU,\
+                   CW_USEDEFAULT, CW_USEDEFAULT, [RectPers.right], [RectPers.bottom], [hwnd], NULL, [pc.hInstance], NULL
+
+            mov [RectPers.top], 0
+            mov [RectPers.left], 0
+            mov [RectPers.right], PERS_X
+            mov [RectPers.bottom], PERS_Y
+
+            mov [hwndPers], eax
+            jmp .finish
         .idmexit:
     .wmdestroy:
         invoke PostQuitMessage,0
         xor eax, eax
+
+    .finish:
+        ret
+    endp
+
+proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
+    cmp [wmsg], WM_PAINT
+    je .wmpaint
+    cmp [wmsg], WM_LBUTTONDOWN
+    je .wmlbuttondown
+
+    .defwndproc:
+        invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
+        jmp .finish
+    .wmpaint:
+        invoke BeginPaint, [hwnd], ps
+        stdcall DrawPers, eax
+        invoke EndPaint, [hwnd], ps
+        jmp .finish
+    .wmlbuttondown:
+
+        stdcall GetLHparam, [lparam], LowWord, HighWord
+        mov eax, [HighWord]
+        mov [saveY], eax
+            push eax
+        mov eax, [LowWord]
+        mov [saveX], eax
+            push eax
+        stdcall FindBackCard
+
+        mov [BackCardIndex], eax
+        ;invoke InvalidateRect, [hwndMain], RectClient, 1
+        ;invoke SendMessage, [hwndMain], WM_PAINT, 0, 0
+
+        jmp .finish
 
     .finish:
         ret
@@ -250,7 +319,6 @@ proc GetLHparam, LH, L, H
 
     ret
     endp
-
 proc LoadImages uses edi
 
     invoke LoadImage, [wc.hInstance], _Texture, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE
@@ -260,4 +328,5 @@ proc LoadImages uses edi
     endp
 
 include 'CardEngine.asm'
+include 'Personalize.asm'
 include 'Data.asm'

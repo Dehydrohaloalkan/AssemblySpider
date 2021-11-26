@@ -154,7 +154,7 @@ proc GameStart, Seed, DeckCount
     mov [SolvingDecksCount], 0
     mov [NewDecksCount], 5
     mov [Points], 500
-    mov [font.lfHeight], 35
+    mov [font.lfHeight], 55
     stdcall SetColumnsLenght
     stdcall SetInitArray, [DeckCount], [Seed], MIXER
     stdcall SetCardsStartInfo
@@ -782,7 +782,7 @@ proc CheckSolveDeck uses ebx esi, Index
 
 proc DrawMap, hDC
 
-    invoke CreateSolidBrush, BCKCOLOR
+    invoke CreateSolidBrush, GAME_BCK_COLOR
     push eax
     invoke FillRect, [hDC], RectClient, eax
 
@@ -959,17 +959,17 @@ proc DrawCard, hDC, left, top
     mov [hTextures], eax
 
     mov eax, [TextureLine]
-    mov edx, CardResolutionY
+    mov edx, CARD_RESOLUTION_Y
     mul edx
     mov [Line], eax
 
     mov eax, [TextureIndex]
-    mov edx, CardResolutionX
+    mov edx, CARD_RESOLUTION_X
     mul edx
 
 
     invoke TransparentBlt, [hDC], [left], [top], [CardWigth], [CardHeight], \
-                         [hCardDC], eax, [Line], CardResolutionX, CardResolutionY, 00FF8080h
+                         [hCardDC], eax, [Line], CARD_RESOLUTION_X, CARD_RESOLUTION_Y, 00FF8080h
 
 
     invoke SelectObject, [hCardDC], [hTextures]
@@ -985,7 +985,7 @@ proc DrawEmptyColumnRect, hDC, index
         hpen    dd  ?
     endl
 
-    mov eax, BCKCOLOR
+    mov eax, GAME_BCK_COLOR
     and eax, 00B0B0B0h
     invoke CreateSolidBrush, eax
     invoke SelectObject, [hDC], eax
