@@ -24,8 +24,12 @@ start:
            75, 0, 1850, 1080, NULL, eax, [wc.hInstance], NULL
     mov [hwndMain], eax
 
+    invoke SetTimer, eax, GAME_TIMER, 10, NULL
+
     stdcall LoadImages
     stdcall CopyStr, font.lfFaceName, _fontname
+
+    invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0
@@ -56,6 +60,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmgetminmaxinfo
     cmp [wmsg], WM_COMMAND
     je .wmcommand
+    cmp [wmsg], WM_TIMER
+    je .wmtimer
 
     .defwndproc:
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
@@ -85,12 +91,6 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke InvalidateRect, [hwnd], NULL, 0
         jmp .finish
     .wmpaint:
-
-        cmp [IsGame], 1
-        je .paintstart
-            stdcall GameStart, 1, 1
-        .paintstart:
-
         invoke BeginPaint, [hwnd], ps
         mov [hdc], eax
 
@@ -216,6 +216,12 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         mov DWORD [edx + 4], 800
 
         jmp .finish
+    .wmtimer:
+        cmp [IsNeedRepaint], 0
+        je .finish
+        invoke InvalidateRect, [hwnd], NULL, 0
+        mov [IsNeedRepaint], 0
+        jmp .finish
     .wmcommand:
 
         mov eax, [wparam]
@@ -231,12 +237,10 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         je .idmpers
 
         .idmnew:
-            stdcall GameStart, 1, 1
-            invoke InvalidateRect, [hwnd], NULL, 0
+            invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0
             jmp .finish
         .idmrestart:
-            stdcall GameStart, 1, 1
-            invoke InvalidateRect, [hwnd], NULL, 0
+            stdcall GameStart, [Seed], 1
             jmp .finish
         .idmpers:
             mov [RectPers.top], 0
@@ -296,10 +300,72 @@ proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         stdcall FindBackCard
 
         mov [BackCardIndex], eax
+        mov [IsNeedRepaint], 1
         ;invoke InvalidateRect, [hwndMain], RectClient, 1
         ;invoke SendMessage, [hwndMain], WM_PAINT, 0, 0
 
         jmp .finish
+
+    .finish:
+        ret
+    endp
+
+proc CheckProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
+    cmp [wmsg], WM_CLOSE
+    je .wmclose
+    cmp [wmsg], WM_COMMAND
+    je .wmcommand
+
+    .defwndproc:
+        invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
+        jmp .finish
+    .wmcommand:
+
+        invoke GetTickCount
+        mov [Seed], eax
+
+        cmp [wparam], IDB_OKBUTTON
+        je .idbokbutton
+        cmp [wparam], IDB_CANCELBUTTON
+        je .wmclose
+        jmp .finish
+
+        .idbokbutton:
+
+            invoke IsDlgButtonChecked, [hwnd], IDC_1SUIT
+            cmp eax, 0
+            je .2suit
+
+                stdcall GameStart, [Seed], 1
+                jmp .wmclose
+
+            .2suit:
+            invoke IsDlgButtonChecked, [hwnd], IDC_2SUIT
+            cmp eax, 0
+            je .4suit
+
+                stdcall GameStart, [Seed], 2
+                jmp .wmclose
+
+            .4suit:
+            invoke IsDlgButtonChecked, [hwnd], IDC_4SUIT
+            cmp eax, 0
+            je .load
+
+                stdcall GameStart, [Seed], 4
+                jmp .wmclose
+
+            .load:
+            invoke IsDlgButtonChecked, [hwnd], IDC_LOAD
+            cmp eax, 0
+            je .finish
+
+                stdcall GameStart, [Seed], 1
+                jmp .wmclose
+
+        jmp .finish
+    .wmclose:
+        invoke EndDialog, [hwnd], 0
 
     .finish:
         ret

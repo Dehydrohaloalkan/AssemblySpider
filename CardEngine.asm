@@ -74,7 +74,7 @@ proc CopyStr uses esi edi, Dest, Sours
     endp
 
 
-proc SetInitArray uses esi edi, DeckCount, Seed, MixerCount
+proc SetInitArray uses esi edi, DeckCount, Seed
 
     xor edx, edx
     xor ecx, ecx
@@ -101,21 +101,23 @@ proc SetInitArray uses esi edi, DeckCount, Seed, MixerCount
     cmp edx, 104*4
     jne .startloop1
 
-    mov eax, [Seed]
-    cmp eax, 1
+    cmp [Seed], 1
     je .finish
+    mov eax, [Seed]
     mov [RandPr], eax
 
-    mov ecx, [MixerCount]
+    mov ecx, MIXER
     .startloop2:
     push ecx
 
-        stdcall RandomGet, 0, 103
+        stdcall RandomGet, 0, 104
         mov edi, eax
         shl edi, 2
-        stdcall RandomGet, 0, 103
+        push edi
+        stdcall RandomGet, 0, 104
         mov esi, eax
         shl esi, 2
+        pop edi
 
         mov eax, [InitArray + esi]
         mov edx, [InitArray + edi]
@@ -149,6 +151,7 @@ proc SetColumnsLenght
     endp
 proc GameStart, Seed, DeckCount
 
+    mov [IsNeedRepaint], 1
     mov [IsGame], 1
     mov [InitPt], 0
     mov [SolvingDecksCount], 0
@@ -156,7 +159,7 @@ proc GameStart, Seed, DeckCount
     mov [Points], 500
     mov [font.lfHeight], 55
     stdcall SetColumnsLenght
-    stdcall SetInitArray, [DeckCount], [Seed], MIXER
+    stdcall SetInitArray, [DeckCount], [Seed]
     stdcall SetCardsStartInfo
     stdcall SetCardsIntervals
     stdcall SetCardsPositions
