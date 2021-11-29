@@ -775,6 +775,17 @@ proc CheckSolveDeck uses ebx esi, Index
     sub edx, ecx
     shl edx, 2
     sub [ColumnLength + edx], 13
+
+    mov ecx, [ColumnLength + edx]
+    shl ecx, 2
+    shl edx, 6
+    add edx, ecx
+    mov ecx, [CardInfo + edx]
+
+    mov edx, [SolvingDecksCount]
+    shl edx, 2
+    mov [SolvingInformation + edx], ecx
+
     inc [SolvingDecksCount]
     add [Points], 100
 
@@ -865,13 +876,18 @@ proc DrawSolvingDecks, hDC
     sub eax, [Indent]
     mov [YPos], eax
 
+    xor edx, edx
     .startloop1:
     push ecx
-        stdcall GetTextureCardIndex, 13
+        mov eax, [SolvingInformation + edx]
+        push edx
+        stdcall GetTextureCardIndex, eax
         stdcall DrawCard, [hDC], [XPos], [YPos]
         mov eax, [XPos]
         add eax, [DownInterval]
         mov [XPos], eax
+        pop edx
+        add edx, 4
     pop ecx
     loop .startloop1
 

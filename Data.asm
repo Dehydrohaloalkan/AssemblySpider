@@ -74,6 +74,7 @@ section '.gdata' data readable writeable
     InitArray               dd      104     dup     ?
     InitPt                  dd      ?
     SolvingDecksCount       dd      ?
+    SolvingInformation      dd      8       dup     ?
     NewDecksCount           dd      ?
 
     saveX           dd      ?

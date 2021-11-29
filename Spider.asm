@@ -322,7 +322,8 @@ proc CheckProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     .wmcommand:
 
         invoke GetTickCount
-        mov [Seed], eax
+        ;mov [Seed], eax
+        mov [Seed], 1
 
         cmp [wparam], IDB_OKBUTTON
         je .idbokbutton
