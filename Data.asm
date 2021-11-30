@@ -84,13 +84,14 @@ section '.gdata' data readable writeable
     TempIndex       dd      ?
     OldColumn       dd      ?
 
-
     IsMouseDown         dd      ?
     ColumnLength        dd      11      dup     ?
     CardsPositionX      dd      11*64   dup     ?
     CardsPositionY      dd      11*64   dup     ?
     CardInfo            dd      11*64   dup     ?
     CardAfterInterval   dd      11*64   dup     ?
+    SaveArray           dd      1000    dup     ?
+    SavePointer         dd      ?
 
 section '.idata' import data readable writeable
 

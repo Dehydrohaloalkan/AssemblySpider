@@ -62,6 +62,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmcommand
     cmp [wmsg], WM_TIMER
     je .wmtimer
+    cmp [wmsg], WM_KEYDOWN
+    je .wmkeydown
 
     .defwndproc:
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
@@ -139,6 +141,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             cmp eax, 0
             je .nomove
             stdcall AddNewCards
+            stdcall SaveInfo, 0, 0, 0, NEW_CODE
             stdcall SetCardsIntervals
             stdcall SetCardsPositions
             dec [NewDecksCount]
@@ -191,11 +194,22 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         cmp eax, 0
         je .moveback
 
+            mov edx, [TempColumn]
+            shl edx, 2
+            mov eax, [ColumnLength + edx]
+            push eax
             stdcall CopyCards, 0, 10, [TempColumn]
             mov eax, [TempColumn]
             cmp eax, [OldColumn]
+            pop eax
+
             je .theend
             dec [Points]
+            cmp [Points], -1
+            jne .save
+                mov [Points], 0
+            .save:
+            stdcall SaveInfo, [TempColumn], [OldColumn], eax, 0
             jmp .theend
 
         .moveback:
@@ -221,6 +235,25 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         je .finish
         invoke InvalidateRect, [hwnd], NULL, 0
         mov [IsNeedRepaint], 0
+        jmp .finish
+    .wmkeydown:
+
+        cmp [wparam], 05Ah
+        je .zdown
+
+        .zdown:
+
+            ;bt [lparam], 24
+            ;jnc .lastmove
+            stdcall MoveBack
+            stdcall SetCardsIntervals
+            stdcall SetCardsPositions
+            invoke InvalidateRect, [hwnd], NULL, 0
+            jmp .lastmove
+
+
+        .lastmove:
+        xor eax, eax
         jmp .finish
     .wmcommand:
 

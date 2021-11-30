@@ -26,9 +26,6 @@ proc IntToStr Num, String
 
     mov eax, [Num]
     mov ecx, 10
-    cmp eax, 0
-    jnl .calculate
-        mov eax, 0
 
     .calculate:
         cmp eax, 0
@@ -110,11 +107,11 @@ proc SetInitArray uses esi edi, DeckCount, Seed
     .startloop2:
     push ecx
 
-        stdcall RandomGet, 0, 104
+        stdcall RandomGet, 0, 103
         mov edi, eax
         shl edi, 2
         push edi
-        stdcall RandomGet, 0, 104
+        stdcall RandomGet, 0, 103
         mov esi, eax
         shl esi, 2
         pop edi
@@ -154,6 +151,7 @@ proc GameStart, Seed, DeckCount
     mov [IsNeedRepaint], 1
     mov [IsGame], 1
     mov [InitPt], 0
+    mov [SavePointer], 0
     mov [SolvingDecksCount], 0
     mov [NewDecksCount], 5
     mov [Points], 500
@@ -479,6 +477,176 @@ proc CheckEmptyColums
     ret
     endp
 
+NEW_CODE = 2
+SOLVE_CODE = 3
+
+proc SaveInfo, New, Old, Index, AdditionInfo
+    cmp [AdditionInfo], NEW_CODE
+    je .newcode
+    cmp [AdditionInfo], SOLVE_CODE
+    je .solvecode
+    jmp .cardonly
+
+    .newcode:
+        mov eax, NEW_CODE
+        jmp .setinfo
+    .solvecode:
+        mov eax, [Old]
+        shl eax, 16
+        add eax, SOLVE_CODE
+        jmp .setinfo
+    .cardonly:
+        mov edx, [Old]
+        shl edx, 2
+        mov ecx, [ColumnLength + edx]
+        cmp ecx, 0
+        je .getinfo
+
+        sub ecx, 1
+        shl edx, 6
+        shl ecx, 2
+        add edx, ecx
+        mov ecx, [CardInfo + edx]
+        mov edx, ecx
+        xor ecx, ecx
+        bt edx, 4
+        adc ecx, 0
+
+        .getinfo:
+        mov eax, [New]
+        shl eax, 8
+        add eax, [Old]
+        shl eax, 8
+        add eax, [Index]
+        shl eax, 8
+        add eax, ecx
+    .setinfo:
+
+        mov edx, [SavePointer]
+        mov [SaveArray + edx], eax
+        add edx, 4
+        mov [SavePointer], edx
+
+    ret
+    endp
+proc MoveBack
+
+    locals
+        New             dd  ?
+        Old             dd  ?
+        Index           dd  ?
+        IsCloseOrInfo   dd  ?
+    endl
+
+    cmp [SavePointer], 0
+    je .noaction
+
+    mov edx, [SavePointer]
+    sub edx, 4
+    mov eax, [SaveArray + edx]
+    mov [SavePointer], edx
+    mov edx, eax
+    movzx ecx, dl
+    mov [IsCloseOrInfo], ecx
+    shr edx, 8
+    movzx ecx, dl
+    mov [Index], ecx
+    shr edx, 8
+    movzx ecx, dl
+    mov [Old], ecx
+    shr edx, 8
+    movzx ecx, dl
+    mov [New], ecx
+
+    cmp [IsCloseOrInfo], 0
+    je .returnwithopen
+    cmp [IsCloseOrInfo], 1
+    je .returnwithclose
+    cmp [IsCloseOrInfo], NEW_CODE
+    je .newcode
+    cmp [IsCloseOrInfo], SOLVE_CODE
+    je .solvecode
+
+    .returnwithclose:
+        mov edx, [Old]
+        shl edx, 2
+        mov ecx, [ColumnLength + edx]
+        sub ecx, 1
+        shl ecx, 2
+        shl edx, 6
+        add edx, ecx
+        add [CardInfo + edx], 10h
+
+    .returnwithopen:
+        stdcall CopyCards, [Index], [New], [Old]
+        jmp .finish
+
+    .newcode:
+        stdcall ReturnNewCards
+        jmp .finish
+
+    .solvecode:
+        stdcall ReturnSolveCards, [Old]
+        sub [Points], 99
+        dec [SolvingDecksCount]
+        stdcall MoveBack
+        jmp .finish
+
+
+    .finish:
+        dec [Points]
+        cmp [Points], -1
+        jne .noaction
+        mov [Points], 0
+
+    .noaction:
+    ret
+    endp
+proc ReturnNewCards
+
+    xor edx, edx
+    .startloop1:
+
+        dec [ColumnLength + edx]
+
+    add edx, 4
+    cmp edx, 4 * 10
+    jne .startloop1
+
+    mov edx, [InitPt]
+    sub edx, 10*4
+    mov [InitPt], edx
+    inc [NewDecksCount]
+
+    ret
+    endp
+proc ReturnSolveCards uses esi, Column
+
+    mov edx, [Column]
+    shl edx, 2
+    mov ecx, [ColumnLength + edx]
+    add [ColumnLength + edx], 13
+
+    shl ecx, 2
+    shl edx, 6
+    add edx, ecx
+
+    mov esi, [SolvingDecksCount]
+    dec esi
+    shl esi, 2
+
+    mov eax, [SolvingInformation + esi]
+
+    mov ecx, 13
+    .startloop1:
+        mov [CardInfo + edx], eax
+        add edx, 4
+        dec eax
+    loop .startloop1
+
+    ret
+    endp
+
 
 proc FindCard, XPos, YPos, Index, Column
 
@@ -775,6 +943,11 @@ proc CheckSolveDeck uses ebx esi, Index
     sub edx, ecx
     shl edx, 2
     sub [ColumnLength + edx], 13
+
+    push edx
+    shr edx, 2
+    stdcall SaveInfo, 0, edx, 0, SOLVE_CODE
+    pop edx
 
     mov ecx, [ColumnLength + edx]
     shl ecx, 2
