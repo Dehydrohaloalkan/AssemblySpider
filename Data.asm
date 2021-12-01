@@ -110,6 +110,8 @@ section '.idata' import data readable writeable
 GAME_MENU           = 10
 GAME_CBOX           = 20
 GAME_TIMER          = 30
+GAME_ICON           = 40
+GAME_ICONS          = 50
 
 IDM_NEW             = 101
 IDM_RESTART         = 102
@@ -126,9 +128,12 @@ IDB_OKBUTTON        = 206
 IDB_CANCELBUTTON    = 207
 
 section '.rsrc' resource data readable
-    directory RT_MENU, menus, RT_DIALOG, dialogs
+    directory RT_MENU, menus, RT_DIALOG, dialogs, RT_ICON, icons, RT_GROUP_ICON, group_icons
     resource menus, GAME_MENU, LANG_ENGLISH+SUBLANG_DEFAULT, main_menu
     resource dialogs, GAME_CBOX, LANG_NEUTRAL, start_game_dialog
+    resource icons, GAME_ICON, LANG_NEUTRAL, main_icon
+    resource group_icons, GAME_ICONS, LANG_NEUTRAL, main_icons
+
 
     menu main_menu
         menuitem '&Game', 0, MFR_POPUP
@@ -149,3 +154,5 @@ section '.rsrc' resource data readable
         dialogitem 'Button', '&OK', IDB_OKBUTTON , 5, 60, 85, 15, WS_VISIBLE
         dialogitem 'Button', '&Cancel', IDB_CANCELBUTTON , 5, 75, 85, 15, WS_VISIBLE
     enddialog
+
+    icon main_icons, main_icon, 'icons8_clubs2.ico'

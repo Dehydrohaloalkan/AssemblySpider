@@ -9,7 +9,7 @@ start:
     invoke GetModuleHandle, 0
     mov [wc.hInstance], eax
     mov [pc.hInstance], eax
-    invoke LoadIcon, 0, IDI_APPLICATION
+    invoke LoadIcon, [wc.hInstance], GAME_ICONS
     mov [wc.hIcon], eax
     mov [pc.hIcon], eax
     invoke  LoadCursor, 0, IDC_ARROW
@@ -110,6 +110,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
     .wmlbuttondown:
         mov [IsMouseDown], 1
+        invoke SetCapture, [hwnd]
         push TempColumn
         push TempIndex
 
@@ -172,6 +173,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
     .wmlbuttonup:
         mov [IsMouseDown], 0
+        invoke ReleaseCapture
 
         push TempColumn
             stdcall GetLHparam, [lparam], LowWord, HighWord
