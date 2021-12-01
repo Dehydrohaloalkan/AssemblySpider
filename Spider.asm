@@ -69,18 +69,25 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
         jmp .finish
     .wmsize:
-        mov eax, [hbmpbuffer]
-        cmp eax, 0
+        cmp [hbmpbuffer], 0
+        je .check
+        invoke DeleteObject, [hbmpbuffer]
+
+        .check:
+        cmp [hBackBuffer], 0
         je .create
-        invoke DeleteObject, eax
+        invoke DeleteObject, [hBackBuffer]
 
         .create:
         invoke CreateIC, _text, NULL, NULL, NULL
         mov [hdc], eax
 
         stdcall GetLHparam, [lparam], LowWord, HighWord
+
         invoke CreateCompatibleBitmap, [hdc], [LowWord], [HighWord]
         mov [hbmpbuffer], eax
+        invoke CreateCompatibleBitmap, [hdc], [LowWord], [HighWord]
+        mov [hBackBuffer], eax
 
         invoke SetRect, RectClient, 0, 0, [LowWord], [HighWord]
 
@@ -90,6 +97,11 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke DeleteDC, [hdc]
         stdcall SetCardsIntervals
         stdcall SetCardsPositions
+
+        invoke BeginPaint, [hwnd], ps
+        stdcall MakeBackBuffer, eax
+        invoke EndPaint, [hwnd], ps
+
         invoke InvalidateRect, [hwnd], NULL, 0
         jmp .finish
     .wmpaint:
@@ -135,7 +147,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             mov eax, [TempColumn]
             mov [OldColumn], eax
             stdcall CopyCards, [TempIndex], [TempColumn], 10
-            jmp .finish
+            jmp .lastaction
 
         .newdeck:
             stdcall CheckEmptyColums
@@ -146,10 +158,15 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             stdcall SetCardsIntervals
             stdcall SetCardsPositions
             dec [NewDecksCount]
-            jmp .finish
+            jmp .lastaction
 
         .nomove:
             jmp .finish
+
+        .lastaction:
+            invoke BeginPaint, [hwnd], ps
+            stdcall MakeBackBuffer, eax
+            invoke EndPaint, [hwnd], ps
     .wmmousemove:
         mov eax, [IsMouseDown]
         cmp eax, 0
@@ -221,6 +238,11 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             stdcall PostCheckCards
             stdcall SetCardsIntervals
             stdcall SetCardsPositions
+
+            invoke BeginPaint, [hwnd], ps
+            stdcall MakeBackBuffer, eax
+            invoke EndPaint, [hwnd], ps
+
             invoke InvalidateRect, [hwnd], NULL, 0
 
         jmp .finish
@@ -235,6 +257,9 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     .wmtimer:
         cmp [IsNeedRepaint], 0
         je .finish
+        invoke BeginPaint, [hwnd], ps
+        stdcall MakeBackBuffer, eax
+        invoke EndPaint, [hwnd], ps
         invoke InvalidateRect, [hwnd], NULL, 0
         mov [IsNeedRepaint], 0
         jmp .finish
@@ -250,7 +275,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             stdcall MoveBack
             stdcall SetCardsIntervals
             stdcall SetCardsPositions
-            invoke InvalidateRect, [hwnd], NULL, 0
+            mov [IsNeedRepaint], 1
             jmp .lastmove
 
 
@@ -430,5 +455,6 @@ proc LoadImages uses edi
     endp
 
 include 'CardEngine.asm'
+include 'CardDrawing.asm'
 include 'Personalize.asm'
 include 'Data.asm'

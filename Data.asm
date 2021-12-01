@@ -47,6 +47,8 @@ section '.sdata' data readable writeable
 
     hmenu           dd      ?
     hbmpbuffer      dd      ?
+    hBackBuffer     dd      ?
+    hdcBackBuffer   dd      ?
     hdc             dd      ?
     hdcMem          dd      ?
     HighWord        dd      ?
