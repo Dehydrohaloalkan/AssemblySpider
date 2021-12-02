@@ -70,50 +70,42 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
         jmp .finish
     .wmsize:
-        cmp [hbmpbuffer], 0
-        je .check
-        invoke DeleteObject, [hbmpbuffer]
-
+            cmp [hbmpbuffer], 0
+            je .check
+            invoke DeleteObject, [hbmpbuffer]
         .check:
-        cmp [hBackBuffer], 0
-        je .create
-        invoke DeleteObject, [hBackBuffer]
-
+            cmp [hBackBuffer], 0
+            je .create
+            invoke DeleteObject, [hBackBuffer]
         .create:
+
         invoke CreateIC, _text, NULL, NULL, NULL
         mov [hdc], eax
 
         stdcall GetLHparam, [lparam], LowWord, HighWord
 
+        invoke SetRect, RectClient, 0, 0, [LowWord], [HighWord]
         invoke CreateCompatibleBitmap, [hdc], [LowWord], [HighWord]
         mov [hbmpbuffer], eax
         invoke CreateCompatibleBitmap, [hdc], [LowWord], [HighWord]
         mov [hBackBuffer], eax
 
-        invoke SetRect, RectClient, 0, 0, [LowWord], [HighWord]
-
         stdcall SetMetrics
         stdcall SetCardsIntervals
-
-        invoke DeleteDC, [hdc]
-        stdcall SetCardsIntervals
         stdcall SetCardsPositions
-
         CreateBackBuffer
 
+        invoke DeleteDC, [hdc]
         invoke InvalidateRect, [hwnd], NULL, 0
         jmp .finish
     .wmpaint:
         invoke BeginPaint, [hwnd], ps
         mov [hdc], eax
-
         invoke CreateCompatibleDC, [hdc]
         mov [hdcMem], eax
-
         invoke SelectObject, [hdcMem], [hbmpbuffer]
 
         stdcall DrawMap, [hdcMem]
-
         invoke BitBlt, [hdc], 0, 0, [RectClient.right], [RectClient.bottom], [hdcMem], 0, 0, SRCCOPY
 
         invoke DeleteDC, [hdcMem]
@@ -122,9 +114,9 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     .wmlbuttondown:
         bts [Flags], IS_MOUSE_DOWN
         invoke SetCapture, [hwnd]
+
         push TempColumn
         push TempIndex
-
             stdcall GetLHparam, [lparam], LowWord, HighWord
             mov eax, [HighWord]
             mov [saveY], eax
@@ -132,7 +124,6 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             mov eax, [LowWord]
             mov [saveX], eax
         push eax
-
         stdcall FindCard
 
         cmp eax, 0
@@ -164,6 +155,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         .lastaction:
             CreateBackBuffer
+            jmp .finish
     .wmmousemove:
         bt [Flags], IS_MOUSE_DOWN
         jnc .finish
@@ -196,18 +188,18 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             mov eax, [LowWord]
             mov [saveX], eax
         push eax
-
         stdcall FindColumn
-        cmp eax, 0
-        je .moveback
+
+        test eax, eax
+        jz .moveback
 
         mov eax, [ColumnLength + 10 * 4]
-        cmp eax, 0
-        je .theend
+        test eax, eax
+        jz .theend
 
         stdcall CheckPlacing, [TempColumn]
-        cmp eax, 0
-        je .moveback
+        test eax, eax
+        jz .moveback
 
             mov edx, [TempColumn]
             shl edx, 2
@@ -234,11 +226,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             stdcall PostCheckCards
             stdcall SetCardsIntervals
             stdcall SetCardsPositions
-
             CreateBackBuffer
-
             invoke InvalidateRect, [hwnd], NULL, 0
-
         jmp .finish
     .wmgetminmaxinfo:
 
