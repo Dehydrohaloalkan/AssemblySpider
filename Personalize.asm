@@ -36,20 +36,20 @@ proc DrawPers uses esi edi, hDC
     mov edi, PERS_INDENT + PERS_FONT
     push [BackCardIndex] [CardWigth] [CardHeight]
     mov [BackCardIndex], 0
-    mov [CardWigth], CARD_RESOLUTION_X
-    mov [CardHeight], CARD_RESOLUTION_Y
+    mov [CardWigth], PERS_CARD_WIGTH
+    mov [CardHeight], PERS_CARD_HEIGHT
 
     .startloop1:
 
         stdcall GetTextureCardIndex, 10h
         stdcall DrawCard, [hDC], esi, edi
 
-        add esi, CARD_RESOLUTION_X + PERS_INDENT
+        add esi, PERS_CARD_WIGTH + PERS_INDENT
         cmp esi, PERS_X
         jne .continue
 
             mov esi, PERS_INDENT
-            add edi, CARD_RESOLUTION_Y + PERS_INDENT
+            add edi, PERS_CARD_HEIGHT + PERS_INDENT
 
         .continue:
 
@@ -73,31 +73,31 @@ proc FindBackCard, XPos, YPos
 
     mov eax, [XPos]
     xor edx, edx
-    mov ecx, CARD_RESOLUTION_X + PERS_INDENT
+    mov ecx, PERS_CARD_WIGTH + PERS_INDENT
     div ecx
     mov [XIndex], eax
 
     mov eax, [YPos]
     sub eax, PERS_FONT
     xor edx, edx
-    mov ecx, CARD_RESOLUTION_Y + PERS_INDENT
+    mov ecx, PERS_CARD_HEIGHT + PERS_INDENT
     div ecx
     mov [YIndex], eax
 
     mov eax, [XIndex]
-    mov edx, CARD_RESOLUTION_X + PERS_INDENT
+    mov edx, PERS_CARD_WIGTH + PERS_INDENT
     mul edx
     add eax, PERS_INDENT
     mov [TempRect.left], eax
-    add eax, CARD_RESOLUTION_X
+    add eax, PERS_CARD_WIGTH
     mov [TempRect.right], eax
 
     mov eax, [YIndex]
-    mov edx, CARD_RESOLUTION_Y + PERS_INDENT
+    mov edx, PERS_CARD_HEIGHT + PERS_INDENT
     mul edx
     add eax, PERS_INDENT + PERS_FONT
     mov [TempRect.top], eax
-    add eax, CARD_RESOLUTION_Y
+    add eax, PERS_CARD_HEIGHT
     mov [TempRect.bottom], eax
 
     invoke PtInRect, TempRect, [XPos], [YPos]

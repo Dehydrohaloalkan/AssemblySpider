@@ -46,8 +46,8 @@ proc MakeBackBuffer, hDC
     push eax
     invoke FillRect, [hdcBackBuffer], RectClient, eax
 
-    cmp [IsGame], 0
-    je .finish
+    bt [Flags], IS_GAME
+    jnc .finish
 
         stdcall DrawSolvingDecks, [hdcBackBuffer]
         stdcall DrawNewDecks, [hdcBackBuffer]

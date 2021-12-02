@@ -8,10 +8,12 @@ PERS_BCK_COLOR      = 0042CDFFh
 
 PERS_X_COUNT        = 4
 PERS_Y_COUNT        = 3
-PERS_INDENT         = 30
-PERS_FONT           = 40
-PERS_X              = PERS_X_COUNT * CARD_RESOLUTION_X + (PERS_X_COUNT + 1) * PERS_INDENT
-PERS_Y              = PERS_Y_COUNT * CARD_RESOLUTION_Y + (PERS_Y_COUNT + 1) * PERS_INDENT + PERS_FONT
+PERS_CARD_WIGTH     = 71
+PERS_CARD_HEIGHT    = 96
+PERS_INDENT         = 15
+PERS_FONT           = 20
+PERS_X              = PERS_X_COUNT * PERS_CARD_WIGTH + (PERS_X_COUNT + 1) * PERS_INDENT
+PERS_Y              = PERS_Y_COUNT * PERS_CARD_HEIGHT + (PERS_Y_COUNT + 1) * PERS_INDENT + PERS_FONT
 
 section '.cardst' data readable writeable
 
@@ -60,8 +62,11 @@ section '.sdata' data readable writeable
 
 section '.gdata' data readable writeable
 
-    IsNeedRepaint           dd      0
-    IsGame                  dd      0
+    IS_GAME                 =       0
+    IS_NEED_REPAINT         =       1
+    IS_MOUSE_DOWN           =       2
+    Flags                   dd      0
+
     Seed                    dd      ?
     Points                  dd      ?
     PointsStr               db      'Points: 500', 0, 0
@@ -86,7 +91,6 @@ section '.gdata' data readable writeable
     TempIndex       dd      ?
     OldColumn       dd      ?
 
-    IsMouseDown         dd      ?
     ColumnLength        dd      11      dup     ?
     CardsPositionX      dd      11*64   dup     ?
     CardsPositionY      dd      11*64   dup     ?
@@ -157,4 +161,4 @@ section '.rsrc' resource data readable
         dialogitem 'Button', '&Cancel', IDB_CANCELBUTTON , 5, 75, 85, 15, WS_VISIBLE
     enddialog
 
-    icon main_icons, main_icon, 'icons8_clubs2.ico'
+    icon main_icons, main_icon, 'For Compile\icons8_clubs2.ico'

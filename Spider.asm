@@ -2,6 +2,7 @@ format PE GUI 4.0
 entry start
 
 include 'win32a.inc'
+include 'Macros.asm'
 
 section '.code' code readable executable
 
@@ -98,9 +99,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         stdcall SetCardsIntervals
         stdcall SetCardsPositions
 
-        invoke BeginPaint, [hwnd], ps
-        stdcall MakeBackBuffer, eax
-        invoke EndPaint, [hwnd], ps
+        CreateBackBuffer
 
         invoke InvalidateRect, [hwnd], NULL, 0
         jmp .finish
@@ -121,7 +120,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke EndPaint, [hwnd], ps
         jmp .finish
     .wmlbuttondown:
-        mov [IsMouseDown], 1
+        bts [Flags], IS_MOUSE_DOWN
         invoke SetCapture, [hwnd]
         push TempColumn
         push TempIndex
@@ -164,13 +163,10 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             jmp .finish
 
         .lastaction:
-            invoke BeginPaint, [hwnd], ps
-            stdcall MakeBackBuffer, eax
-            invoke EndPaint, [hwnd], ps
+            CreateBackBuffer
     .wmmousemove:
-        mov eax, [IsMouseDown]
-        cmp eax, 0
-        je .finish
+        bt [Flags], IS_MOUSE_DOWN
+        jnc .finish
         stdcall GetLHparam, [lparam], LowWord, HighWord
 
         mov eax, [HighWord]
@@ -189,7 +185,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke InvalidateRect, [hwnd], NULL, 0
         jmp .finish
     .wmlbuttonup:
-        mov [IsMouseDown], 0
+        btr [Flags], IS_MOUSE_DOWN
         invoke ReleaseCapture
 
         push TempColumn
@@ -239,9 +235,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             stdcall SetCardsIntervals
             stdcall SetCardsPositions
 
-            invoke BeginPaint, [hwnd], ps
-            stdcall MakeBackBuffer, eax
-            invoke EndPaint, [hwnd], ps
+            CreateBackBuffer
 
             invoke InvalidateRect, [hwnd], NULL, 0
 
@@ -250,18 +244,15 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         mov edx, [lparam]
         add edx, 24
-        mov DWORD [edx], 1200
-        mov DWORD [edx + 4], 800
+        mov DWORD [edx], 1000
+        mov DWORD [edx + 4], 750
 
         jmp .finish
     .wmtimer:
-        cmp [IsNeedRepaint], 0
-        je .finish
-        invoke BeginPaint, [hwnd], ps
-        stdcall MakeBackBuffer, eax
-        invoke EndPaint, [hwnd], ps
+        btr [Flags], IS_NEED_REPAINT
+        jnc .finish
+        CreateBackBuffer
         invoke InvalidateRect, [hwnd], NULL, 0
-        mov [IsNeedRepaint], 0
         jmp .finish
     .wmkeydown:
 
@@ -275,9 +266,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             stdcall MoveBack
             stdcall SetCardsIntervals
             stdcall SetCardsPositions
-            mov [IsNeedRepaint], 1
+            btr [Flags], IS_NEED_REPAINT
             jmp .lastmove
-
 
         .lastmove:
         xor eax, eax
@@ -360,9 +350,7 @@ proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         stdcall FindBackCard
 
         mov [BackCardIndex], eax
-        mov [IsNeedRepaint], 1
-        ;invoke InvalidateRect, [hwndMain], RectClient, 1
-        ;invoke SendMessage, [hwndMain], WM_PAINT, 0, 0
+        bts [Flags], IS_NEED_REPAINT
 
         jmp .finish
 

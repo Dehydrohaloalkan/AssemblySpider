@@ -148,8 +148,8 @@ proc SetColumnsLenght
     endp
 proc GameStart, Seed, DeckCount
 
-    mov [IsNeedRepaint], 1
-    mov [IsGame], 1
+    bts [Flags], IS_NEED_REPAINT
+    bts [Flags], IS_GAME
     mov [InitPt], 0
     mov [SavePointer], 0
     mov [SolvingDecksCount], 0
