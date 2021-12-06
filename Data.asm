@@ -2,7 +2,7 @@
 CARD_RESOLUTION_X   = 71 * 2
 CARD_RESOLUTION_Y   = 96 * 2
 MIXER               = 500
-ANIMATION_TIME      = 12
+ANIMATION_TIME      = 8
 
 GAME_BCK_COLOR      = 0053771Bh
 PERS_BCK_COLOR      = 0042CDFFh
@@ -85,8 +85,9 @@ section '.gdata' data readable writeable
         CRD_NextRef     = 52
         CRD_NextAnimRef = 56
         CRD_Column      = 60
+        CRD_OldColumn   = 64
 
-        CRD_SizeD       = 16
+        CRD_SizeD       = 20
         CRD_Size        = CRD_SizeD * 4
 
     ; Columns
@@ -95,7 +96,7 @@ section '.gdata' data readable writeable
     AnimColumn      dd  1 * CRD_SizeD dup ?
 
     IS_GAME                 =       0
-    IS_NEED_REPAINT         =       1
+    IS_Animation            =       1
     IS_MOUSE_DOWN           =       2
     Flags                   dd      0
     Clock                   dd      ?

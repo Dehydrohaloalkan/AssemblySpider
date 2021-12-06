@@ -110,7 +110,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
     .wmlbuttondown:
         stdcall GetLHparam, [lparam], LowWord, HighWord
-        stdcall Game.OnMouseDown
+        stdcall Game.OnMouseDown, [hwnd]
         jmp .finish
     .wmmousemove:
         stdcall GetLHparam, [lparam], LowWord, HighWord
@@ -153,7 +153,7 @@ proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         stdcall FindBackCard
 
         mov [BackCardIndex], eax
-        bts [Flags], IS_NEED_REPAINT
+        bts [Flags], IS_Animation
 
         jmp .finish
 
