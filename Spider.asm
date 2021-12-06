@@ -87,8 +87,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         invoke CreateCompatibleBitmap, [hdcTemp], [LowWord], [HighWord]
         mov [hBackBuffer], eax
 
-        stdcall Game.OnSize
-        MCreateBackBuffer
+        stdcall Game.OnSize, [hwnd]
 
         invoke DeleteDC, [hdcTemp]
         invoke InvalidateRect, [hwnd], NULL, 0
@@ -100,8 +99,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         mov [hdcDoubleBuffer], eax
         invoke SelectObject, [hdcDoubleBuffer], [hDoubleBuffer]
 
-        stdcall Game.OnPaint
-        MCreateBackBuffer
+        stdcall Game.OnPaint, [hwnd]
 
         invoke BitBlt, [hdcTemp], 0, 0, [RectClient.right], [RectClient.bottom], [hdcDoubleBuffer], 0, 0, SRCCOPY
         invoke DeleteDC, [hdcDoubleBuffer]

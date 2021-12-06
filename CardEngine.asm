@@ -147,15 +147,16 @@ proc Game.FindCard, XCord, YCord
     ret
     endp
 
-proc Game.OnSize
+proc Game.OnSize, hwnd
 
     stdcall Metrics.Calculate
     stdcall Metrics.SetColumnPositions
     stdcall Metrics.SetAllCardsPositions
+    MCreateBackBuffer
 
     ret
     endp
-proc Game.OnPaint
+proc Game.OnPaint, hwnd
 
     invoke GetTickCount
     sub eax, [Clock]
@@ -163,6 +164,7 @@ proc Game.OnPaint
     jb .skipanimation
         stdcall Animation.Run
         add [Clock], eax
+        MCreateBackBuffer
     .skipanimation:
     stdcall Map.Draw, [hdcDoubleBuffer]
 
@@ -170,6 +172,7 @@ proc Game.OnPaint
     endp
 proc Game.OnMouseDown
 
+    bts [Flags], IS_MOUSE_DOWN
     mov eax, [HighWord]
     mov [saveY], eax
     mov eax, [LowWord]
@@ -178,14 +181,8 @@ proc Game.OnMouseDown
     stdcall Game.FindCard, [saveX], [saveY]
     test eax, eax
     jz .skip
-        stdcall Card.Open, eax
+        stdcall Column.Replace, MovingColumn, eax
     .skip:
-
-    ;stdcall Game.Start
-    ;mov DWORD [Cards + CRD_XAim], 500
-    ;mov DWORD [Cards + CRD_YAim], 500
-    ;stdcall Card.InitAnimation, Cards, 0
-    bts [Flags], IS_MOUSE_DOWN
 
     ret
     endp
@@ -194,17 +191,19 @@ proc Game.OnMouseMove
     bt [Flags], IS_MOUSE_DOWN
     jnc .finish
 
-    mov eax, [HighWord]
-    sub eax, [saveY]
-    add [Cards + CRD_YCord], eax
-    mov eax, [LowWord]
-    sub eax, [saveX]
-    add [Cards + CRD_XCord], eax
+        mov eax, [HighWord]
+        sub eax, [saveY]
+        push eax
+        mov eax, [LowWord]
+        sub eax, [saveX]
+        push eax
 
-    mov eax, [LowWord]
-    mov [saveX], eax
-    mov eax, [HighWord]
-    mov [saveY], eax
+        stdcall Column.Move
+
+        mov eax, [LowWord]
+        mov [saveX], eax
+        mov eax, [HighWord]
+        mov [saveY], eax
 
     .finish:
     ret
@@ -311,6 +310,9 @@ proc Column.Append, Column, Card
     mov ecx, edx
     mov edx, eax
     mov [edx + CRD_PredRef], ecx
+    mov edx, [Card]
+    mov eax, [Column]
+    mov [edx + CRD_Column], eax
 
     ret
     endp
@@ -327,7 +329,7 @@ proc Column.Remove, Column, Card
     jnz .startloop1
 
     mov edx, eax
-    mov [edx + CRD_NextRef], 0
+    mov DWORD [edx + CRD_NextRef], 0
 
     ret
     endp
@@ -438,13 +440,48 @@ proc Column.Draw, Column, hdc
         jnz .startloop1
         jmp .finish
     .empty:
+        cmp [Column], MovingColumn
+        je .finish
         stdcall Column.DrawEmpty, edx, [hdc]
     .finish:
     ret
     endp
 proc Column.DrawEmpty, Column, hdc
 
+    locals
+        hbruh   dd  ?
+        hpen    dd  ?
+    endl
 
+    mov eax, GAME_BCK_COLOR
+    and eax, 00B0B0B0h
+    invoke CreateSolidBrush, eax
+    invoke SelectObject, [hdc], eax
+    mov [hbruh], eax
+
+    invoke CreatePen, PS_SOLID, 3, 00000000h
+    invoke SelectObject, [hdc], eax
+    mov [hpen], eax
+
+    push 10 10
+    mov edx, [Column]
+
+    mov eax, [edx + CRD_YCord]
+    add eax, [CardHeight]
+    push eax
+
+    mov eax, [edx + CRD_XCord]
+    add eax, [CardWigth]
+    push eax
+
+    push DWORD [edx + CRD_YCord]
+    push DWORD [edx + CRD_XCord]
+    invoke RoundRect, [hdc]
+
+    invoke SelectObject, [hdc], [hpen]
+    invoke DeleteObject, eax
+    invoke SelectObject, [hdc], [hbruh]
+    invoke DeleteObject, eax
 
     ret
     endp
@@ -452,6 +489,8 @@ proc Column.FindCard, Column, XCord, YCord
 
     stdcall Column.FindEnd, [Column]
     mov edx, eax
+    cmp edx, [Column]
+    je .finloop1
     .startloop1:
         push edx
         stdcall Card.CheckCollision, edx, [XCord], [YCord]
@@ -466,6 +505,31 @@ proc Column.FindCard, Column, XCord, YCord
     .finloop1:
         xor eax, eax
     .finish:
+    ret
+    endp
+proc Column.Replace, NewColumn, Card
+
+    mov edx, [Card]
+    stdcall Column.Remove, [edx + CRD_Column], edx
+    stdcall Column.Append, [NewColumn], [Card]
+
+    ret
+    endp
+proc Column.Move, deltaX, deltaY
+
+    mov edx, MovingColumn
+    .startloop1:
+        mov eax, [edx + CRD_NextRef]
+        test eax, eax
+        jz .finloop1
+        mov edx, eax
+        mov eax, [deltaX]
+        add [edx + CRD_XCord], eax
+        mov eax, [deltaY]
+        add [edx + CRD_YCord], eax
+    jmp .startloop1
+    .finloop1:
+
     ret
     endp
 
@@ -716,7 +780,7 @@ proc Map.Draw, hdc
     invoke SelectObject, [hdcBackBuffer], [hBackBuffer]
 
     invoke BitBlt, [hdc], 0, 0, [RectClient.right], [RectClient.bottom], [hdcBackBuffer], 0, 0, SRCCOPY
-    ;stdcall Card.Draw, Cards, [hdc]
+    stdcall Map.DrawMovingCards, [hdc]
 
     invoke DeleteDC, [hdcBackBuffer]
 
@@ -756,7 +820,7 @@ proc Map.DrawStaticCards, hdc
     endp
 proc Map.DrawMovingCards, hdc
 
-
+    stdcall Column.Draw, MovingColumn, [hdc]
 
     ret
     endp

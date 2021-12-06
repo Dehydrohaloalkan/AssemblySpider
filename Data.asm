@@ -63,7 +63,6 @@ section '.gdata' data readable writeable
         CRD_Info        = 0
             ; Suit      0 - 1
             ; Nominal   2 - 5
-            ; Column    6 - 9
             ; Flags     10 - 14
             INF_IsClose     = 10
             INF_IsOnBoard   = 11
@@ -85,6 +84,7 @@ section '.gdata' data readable writeable
         CRD_PredRef     = 48
         CRD_NextRef     = 52
         CRD_NextAnimRef = 56
+        CRD_Column      = 60
 
         CRD_SizeD       = 16
         CRD_Size        = CRD_SizeD * 4
