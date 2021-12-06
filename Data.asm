@@ -2,6 +2,7 @@
 CARD_RESOLUTION_X   = 71 * 2
 CARD_RESOLUTION_Y   = 96 * 2
 MIXER               = 500
+ANIMATION_TIME      = 12
 
 GAME_BCK_COLOR      = 0053771Bh
 PERS_BCK_COLOR      = 0042CDFFh
@@ -15,13 +16,7 @@ PERS_FONT           = 20
 PERS_X              = PERS_X_COUNT * PERS_CARD_WIGTH + (PERS_X_COUNT + 1) * PERS_INDENT
 PERS_Y              = PERS_Y_COUNT * PERS_CARD_HEIGHT + (PERS_Y_COUNT + 1) * PERS_INDENT + PERS_FONT
 
-section '.cardst' data readable writeable
 
-    _Texture            TCHAR   'res\cards.bmp', 0
-    hTextures           dd      ?
-    TextureLine         dd      ?
-    TextureIndex        dd      ?
-    BackCardIndex       dd      0
 
 section '.sdata' data readable writeable
 
@@ -31,10 +26,8 @@ section '.sdata' data readable writeable
     _perstitle  TCHAR 'Personalize', 0
     _text       TCHAR 'DISPLAY', 0
     _name       TCHAR 'res\Card.bmp', 0
-
     _fontname   TCHAR 'Ink Free', 0
     _persfont   TCHAR 'Consolas', 0
-
     _persstr    TCHAR 'Choosing a card back:', 0
     _winstr     TCHAR 'You Win!', 0
     winstrlen   dd    8
@@ -44,121 +37,85 @@ section '.sdata' data readable writeable
     msg         MSG
     font        LOGFONT 35, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
 
-    hwndMain        dd      ?
-    hwndPers        dd      ?
+    _Texture            TCHAR   'res\cards.bmp', 0
+    BackCardIndex       dd      0
+    _PointsStr          db      'Points: 500', 0, 0
+    PointsStrLen        dd      ?
+    hTextures           dd      ?
 
-    hmenu           dd      ?
-    hbmpbuffer      dd      ?
-    hBackBuffer     dd      ?
-    hdcBackBuffer   dd      ?
-    hdc             dd      ?
-    hdcMem          dd      ?
-    HighWord        dd      ?
-    LowWord         dd      ?
-    RandPr          dd      ?
-    RectClient      RECT
-    RectPers        RECT
-    ps              PAINTSTRUCT
+    hDoubleBuffer       dd      ?
+    hBackBuffer         dd      ?
+    hdcDoubleBuffer     dd      ?
+    hdcBackBuffer       dd      ?
+    hdcTemp             dd      ?
+
+    HighWord            dd      ?
+    LowWord             dd      ?
+    RectClient          RECT
+    RectPers            RECT
+    TempRect            RECT
+    ps                  PAINTSTRUCT
 
 section '.gdata' data readable writeable
+
+    ; Card Structure
+    Cards           dd  104 * CRD_SizeD dup ?
+        CRD_Info        = 0
+            ; Suit      0 - 1
+            ; Nominal   2 - 5
+            ; Column    6 - 9
+            ; Flags     10 - 14
+            INF_IsClose     = 10
+            INF_IsOnBoard   = 11
+            INF_IsAnim      = 12
+            INF_IsPop       = 13
+            INF_IsMove      = 14
+            INF_IsWait      = 15
+        CRD_XCord       = 4
+        CRD_YCord       = 8
+        CRD_XAnim       = 12
+        CRD_YAnim       = 16
+        CRD_AnimCount   = 20
+        CRD_AnimWait    = 24
+        CRD_XAim        = 28
+        CRD_YAim        = 32
+        CRD_XTexture    = 36
+        CRD_YTexture    = 40
+        CRD_Indent      = 44
+        CRD_PredRef     = 48
+        CRD_NextRef     = 52
+        CRD_NextAnimRef = 56
+
+        CRD_SizeD       = 16
+        CRD_Size        = CRD_SizeD * 4
+
+    ; Columns
+    Columns         dd  10 * CRD_SizeD dup ?
+    MovingColumn    dd  1 * CRD_SizeD dup ?
+    AnimColumn      dd  1 * CRD_SizeD dup ?
 
     IS_GAME                 =       0
     IS_NEED_REPAINT         =       1
     IS_MOUSE_DOWN           =       2
     Flags                   dd      0
+    Clock                   dd      ?
 
+    ; Game Information
     Seed                    dd      ?
+    RandPr                  dd      ?
     Points                  dd      ?
-    PointsStr               db      'Points: 500', 0, 0
-    PointsStrLen            dd      ?
+    saveX                   dd      ?
+    saveY                   dd      ?
+    SolvingDecksCount       dd      ?
+    SolvingInformation      dd      8       dup     ?
+    NewDecksCount           dd      ?
 
+    ; Metrics
     CardHeight              dd      ?
     CardWigth               dd      ?
     CenterColumnInterval    dd      ?
     Indent                  dd      ?
     DownInterval            dd      ?
 
-    InitArray               dd      104     dup     ?
-    InitPt                  dd      ?
-    SolvingDecksCount       dd      ?
-    SolvingInformation      dd      8       dup     ?
-    NewDecksCount           dd      ?
-
-    saveX           dd      ?
-    saveY           dd      ?
-    TempRect        RECT
-    TempColumn      dd      ?
-    TempIndex       dd      ?
-    OldColumn       dd      ?
-
-    ColumnLength        dd      11      dup     ?
-    CardsPositionX      dd      11*64   dup     ?
-    CardsPositionY      dd      11*64   dup     ?
-    CardInfo            dd      11*64   dup     ?
-    CardAfterInterval   dd      11*64   dup     ?
-    SaveArray           dd      1000    dup     ?
-    SavePointer         dd      ?
-
-section '.idata' import data readable writeable
-
-    library kernel32, 'KERNEL32.DLL', \
-            user32,   'USER32.DLL', \
-            gdi32,    'GDI32.DLL',\
-            msimg32,  'msimg32.dll'
-
-    import msimg32,\
-            TransparentBlt, 'TransparentBlt'
-
-    include 'api\kernel32.inc'
-    include 'api\user32.inc'
-    include 'api\gdi32.inc'
-
-GAME_MENU           = 10
-GAME_CBOX           = 20
-GAME_TIMER          = 30
-GAME_ICON           = 40
-GAME_ICONS          = 50
-
-IDM_NEW             = 101
-IDM_RESTART         = 102
-IDM_EXIT            = 103
-IDM_ABOUT           = 104
-IDM_PERS            = 105
-
-IDC_GETSUITNUMBER   = 201
-IDC_1SUIT           = 202
-IDC_2SUIT           = 203
-IDC_4SUIT           = 204
-IDC_LOAD            = 205
-IDB_OKBUTTON        = 206
-IDB_CANCELBUTTON    = 207
-
-section '.rsrc' resource data readable
-    directory RT_MENU, menus, RT_DIALOG, dialogs, RT_ICON, icons, RT_GROUP_ICON, group_icons
-    resource menus, GAME_MENU, LANG_ENGLISH+SUBLANG_DEFAULT, main_menu
-    resource dialogs, GAME_CBOX, LANG_NEUTRAL, start_game_dialog
-    resource icons, GAME_ICON, LANG_NEUTRAL, main_icon
-    resource group_icons, GAME_ICONS, LANG_NEUTRAL, main_icons
-
-
-    menu main_menu
-        menuitem '&Game', 0, MFR_POPUP
-            menuitem '&New', IDM_NEW
-            menuitem '&Restart', IDM_RESTART
-            menuseparator
-            menuitem 'E&xit', IDM_EXIT,MFR_END
-        menuitem '&Help', 0, MFR_POPUP
-            menuitem '&About...', IDM_ABOUT, MFR_END
-        menuitem '&Personalize', IDM_PERS, MFR_END
-
-    dialog start_game_dialog, 'New Game', 0, 0, 97, 110, DS_CENTER+DS_SETFONT, 0, NULL, 1
-        dialogitem 'Button', 'Number of card suits', IDC_GETSUITNUMBER, 5, 5, 85, 55, WS_VISIBLE+BS_GROUPBOX
-            dialogitem 'Button', '&1 suit', IDC_1SUIT, 10, 17, 60, 10, WS_VISIBLE+BS_AUTORADIOBUTTON+WS_GROUP
-            dialogitem 'Button', '&2 suits', IDC_2SUIT, 10, 27, 60, 10, WS_VISIBLE+BS_AUTORADIOBUTTON
-            dialogitem 'Button', '&4 suits', IDC_4SUIT, 10, 37, 60, 10, WS_VISIBLE+BS_AUTORADIOBUTTON
-            dialogitem 'Button', '&Load Old Game', IDC_LOAD, 10, 47, 70, 10, WS_VISIBLE+BS_AUTORADIOBUTTON
-        dialogitem 'Button', '&OK', IDB_OKBUTTON , 5, 60, 85, 15, WS_VISIBLE
-        dialogitem 'Button', '&Cancel', IDB_CANCELBUTTON , 5, 75, 85, 15, WS_VISIBLE
-    enddialog
-
-    icon main_icons, main_icon, 'For Compile\icons8_clubs2.ico'
+    SaveArray       dd  1000 dup ?
+    SavePointer     dd  ?
