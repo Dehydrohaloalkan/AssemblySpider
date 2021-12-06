@@ -112,14 +112,38 @@ proc Game.Start
     mov eax, 0
     .startloop2:
         push ecx edx eax
-        stdcall Card.InitAnimation, edx, eax
+        stdcall Card.InitAnimation, edx, eax, 8
         pop eax edx ecx
         add edx, CRD_Size
-        add eax, 5
+        add eax, 2
     loop .startloop2
 
     ;stdcall Metrics.SetAllCardsPositions
 
+    ret
+    endp
+proc Game.FindCard, XCord, YCord
+
+    mov eax, [XCord]
+    mov edx, [CenterColumnInterval]
+    shr edx, 1
+    add eax, edx
+    xor edx, edx
+    div [CenterColumnInterval]
+    dec eax
+    cmp eax, -1
+    je .nocard
+    cmp eax, 10
+    je .nocard
+
+    mov edx, CRD_Size
+    mul edx
+    add eax, Columns
+    stdcall Column.FindCard, eax, [XCord], [YCord]
+    jmp .finish
+    .nocard:
+        xor eax, eax
+    .finish:
     ret
     endp
 
@@ -150,6 +174,12 @@ proc Game.OnMouseDown
     mov [saveY], eax
     mov eax, [LowWord]
     mov [saveX], eax
+
+    stdcall Game.FindCard, [saveX], [saveY]
+    test eax, eax
+    jz .skip
+        stdcall Card.Open, eax
+    .skip:
 
     ;stdcall Game.Start
     ;mov DWORD [Cards + CRD_XAim], 500
@@ -184,7 +214,7 @@ proc Game.OnMouseUp
     btr [Flags], IS_MOUSE_DOWN
     mov DWORD [Cards + CRD_XAim], 500
     mov DWORD [Cards + CRD_YAim], 500
-    stdcall Card.InitAnimation, Cards, 0
+    stdcall Card.InitAnimation, Cards, 0, 12
 
     ret
     endp
@@ -418,6 +448,26 @@ proc Column.DrawEmpty, Column, hdc
 
     ret
     endp
+proc Column.FindCard, Column, XCord, YCord
+
+    stdcall Column.FindEnd, [Column]
+    mov edx, eax
+    .startloop1:
+        push edx
+        stdcall Card.CheckCollision, edx, [XCord], [YCord]
+        pop edx
+        test eax, eax
+        jnz .finish
+        mov eax, [edx + CRD_PredRef]
+        test eax, eax
+        jz .finloop1
+        mov edx, eax
+    jmp .startloop1
+    .finloop1:
+        xor eax, eax
+    .finish:
+    ret
+    endp
 
 
 proc Animation.Append, Card
@@ -554,7 +604,7 @@ proc Card.Draw, Card, hdc
 
     ret
     endp
-proc Card.InitAnimation, Card, WaitTime
+proc Card.InitAnimation, Card, WaitTime, AnimTime
 
     mov edx, [Card]
 
@@ -571,7 +621,7 @@ proc Card.InitAnimation, Card, WaitTime
     mov eax, [edx + CRD_XAim]
     sub eax, [edx + CRD_XCord]
     cdq
-    mov ecx, ANIMATION_TIME
+    mov ecx, [AnimTime]
     idiv ecx
     push eax
 
@@ -579,7 +629,7 @@ proc Card.InitAnimation, Card, WaitTime
     mov eax, [edx + CRD_YAim]
     sub eax, [edx + CRD_YCord]
     cdq
-    mov ecx, ANIMATION_TIME
+    mov ecx, [AnimTime]
     idiv ecx
     push eax
 
@@ -587,7 +637,8 @@ proc Card.InitAnimation, Card, WaitTime
     pop DWORD [edx + CRD_YAnim]
     pop DWORD [edx + CRD_XAnim]
 
-    mov DWORD [edx + CRD_AnimCount], ANIMATION_TIME
+    mov eax, [AnimTime]
+    mov DWORD [edx + CRD_AnimCount], eax
 
     stdcall Animation.Append, edx
 
@@ -634,6 +685,26 @@ proc Card.EndAnimation, Card
     mov DWORD [edx + CRD_YAim], 0
     stdcall Animation.Remove, edx
 
+    ret
+    endp
+proc Card.CheckCollision, Card, XCord, YCord
+
+    mov edx, [Card]
+
+    mov eax, [edx + CRD_XCord]
+    mov [TempRect.left], eax
+    add eax, [CardWigth]
+    mov [TempRect.right], eax
+    mov eax, [edx + CRD_YCord]
+    mov [TempRect.top], eax
+    add eax, [CardHeight]
+    mov [TempRect.bottom], eax
+
+    invoke PtInRect, TempRect, [XCord], [YCord]
+    test eax, eax
+    jz .finish
+        mov eax, [Card]
+    .finish:
     ret
     endp
 
