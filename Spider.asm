@@ -6,8 +6,8 @@ include 'Macros.asm'
 
 section '.code' code readable executable
 
-stdcall Game.Start
-stdcall Column.SetCardsIntervals
+stdcall Column.FindCard
+stdcall Game.OnMouseDown
 
 start:
     invoke GetModuleHandle, 0

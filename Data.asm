@@ -84,8 +84,9 @@ section '.gdata' data readable writeable
         CRD_PredRef     = 48
         CRD_NextRef     = 52
         CRD_NextAnimRef = 56
-        CRD_Column      = 60
-        CRD_OldColumn   = 64
+        CRD_PredAnimRef = 60
+        CRD_Column      = 64
+        CRD_OldColumn   = 68
 
         CRD_SizeD       = 20
         CRD_Size        = CRD_SizeD * 4
@@ -94,6 +95,8 @@ section '.gdata' data readable writeable
     Columns         dd  10 * CRD_SizeD dup ?
     MovingColumn    dd  1 * CRD_SizeD dup ?
     AnimColumn      dd  1 * CRD_SizeD dup ?
+    NewColumn       dd  1 * CRD_SizeD dup ?
+    SolvingColumn   dd  1 * CRD_SizeD dup ?
 
     IS_GAME                 =       0
     IS_Animation            =       1
@@ -109,7 +112,7 @@ section '.gdata' data readable writeable
     saveY                   dd      ?
     SolvingDecksCount       dd      ?
     SolvingInformation      dd      8       dup     ?
-    NewDecksCount           dd      ?
+    NewDecksCount           dd      5
 
     ; Metrics
     CardHeight              dd      ?

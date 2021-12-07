@@ -91,6 +91,11 @@ proc Game.SetStartLayOut
     endp
 proc Game.Start
 
+    locals
+        StartX  dd  ?
+        StartY  dd  ?
+    endl
+
     bts [Flags], IS_Animation
 
     stdcall Game.PreInitCards
@@ -99,6 +104,8 @@ proc Game.Start
     stdcall Metrics.Calculate
     stdcall Metrics.SetColumnPositions
     stdcall Game.SetStartLayOut
+    stdcall NewColumn.InfoInit
+    stdcall NewColumn.SetPositions
 
     mov ecx, 10
     mov edx, Columns
@@ -109,18 +116,29 @@ proc Game.Start
         add edx, CRD_Size
     loop .startloop1
 
+    stdcall Column.FindEnd, NewColumn
+    mov edx, eax
+    mov eax, [edx + CRD_XCord]
+    mov [StartX], eax
+    mov eax, [edx + CRD_YCord]
+    mov [StartY], eax
+
     mov ecx, 54
     mov edx, Cards
     mov eax, 0
     .startloop2:
-        push ecx edx eax
-        stdcall Card.InitAnimation, edx, eax, 8
-        pop eax edx ecx
+        push eax
+        mov eax, [StartX]
+        mov [edx + CRD_XCord], eax
+        mov eax, [StartY]
+        mov [edx + CRD_YCord], eax
+        pop eax
+        push ecx eax edx
+        stdcall Card.InitAnimation, edx, eax, 12
+        pop edx eax ecx
         add edx, CRD_Size
-        add eax, 2
+        add eax, 4
     loop .startloop2
-
-    ;stdcall Metrics.SetAllCardsPositions
 
     ret
     endp
@@ -166,6 +184,7 @@ proc Game.OnSize, hwnd
     stdcall Metrics.Calculate
     stdcall Metrics.SetColumnPositions
     stdcall Metrics.SetAllCardsPositions
+    stdcall NewColumn.SetPositions
     MCreateBackBuffer
 
     ret
@@ -263,7 +282,7 @@ proc Game.OnMouseUp
         .set:
         pop eax
         mov [Column], eax
-        inc [Points]
+        dec [Points]
 
     .moving:
         stdcall Column.Replace, [Column], [Card]
@@ -539,7 +558,9 @@ proc Column.Draw, Column, hdc
 
     cmp [Column], MovingColumn
     je .looppreparation
-        stdcall Column.DrawEmpty, edx, [hdc]
+    cmp [Column], NewColumn
+    je .looppreparation
+        stdcall Column.DrawEmpty, [Column], [hdc]
     .looppreparation:
         mov edx, [Column]
         mov eax, [edx + CRD_NextRef]
@@ -548,7 +569,10 @@ proc Column.Draw, Column, hdc
     .startloop1:
         mov edx, eax
         push edx
-        stdcall Card.Draw, edx, [hdc]
+        ;bt DWORD [edx + CRD_Info], INF_IsAnim
+        ;jc .skip
+            stdcall Card.Draw, edx, [hdc]
+        ;.skip:
         pop edx
         mov eax, [edx + CRD_NextRef]
         test eax, eax
@@ -609,15 +633,15 @@ proc Column.FindCard, Column, XCord, YCord
     cmp edx, [Column]
     je .finloop1
     .startloop1:
+        cmp eax, [Column]
+        je .finloop1
+        mov edx, eax
         push edx
         stdcall Card.CheckCollision, edx, [XCord], [YCord]
         pop edx
         test eax, eax
         jnz .find
         mov eax, [edx + CRD_PredRef]
-        test eax, eax
-        jz .finloop1
-        mov edx, eax
     jmp .startloop1
     .finloop1:
         xor eax, eax
@@ -724,23 +748,89 @@ proc Column.InitAnimation, Column
     endp
 
 
+proc NewColumn.InfoInit
+
+    mov edx, Cards + 103 * CRD_Size
+    mov ecx, 50
+    .startloop1:
+        push ecx edx
+        stdcall Column.Append, NewColumn, edx
+        pop edx
+        push edx
+        stdcall Card.Close, edx
+        pop edx ecx
+        sub edx, CRD_Size
+    loop .startloop1
+
+    ret
+    endp
+proc NewColumn.SetPositions
+
+    locals
+        XCord   dd  ?
+        YCord   dd  ?
+    endl
+
+    mov eax, [RectClient.right]
+    sub eax, [CenterColumnInterval]
+    sub eax, [CardWigth]
+    mov [XCord], eax
+
+    mov eax, [RectClient.bottom]
+    sub eax, [DownInterval]
+    sub eax, [CardHeight]
+    mov [YCord], eax
+
+    mov ecx, [NewDecksCount]
+    test ecx, ecx
+    jz .finish
+    mov eax, [NewColumn + CRD_NextRef]
+    test eax, eax
+    jz .finish
+    mov edx, eax
+    .startloop1:
+        push ecx
+
+        mov ecx, 10
+        .startloop2:
+            mov eax, [XCord]
+            mov [edx + CRD_XCord], eax
+            mov eax, [YCord]
+            mov [edx + CRD_YCord], eax
+            mov eax, [edx + CRD_NextRef]
+            mov edx, eax
+        loop .startloop2
+
+        mov eax, [XCord]
+        sub eax, [DownInterval]
+        mov [XCord], eax
+
+        pop ecx
+    loop .startloop1
+
+    .finish:
+    ret
+    endp
+
+
 proc Animation.Append, Card
 
-    mov edx, AnimColumn
-    .startloop1:
-        mov eax, [edx + CRD_NextAnimRef]
-        test eax, eax
-        jz .finloop1
-        mov edx, eax
-    jmp .startloop1
-    .finloop1:
+    stdcall Animation.FindEnd
+    mov edx, eax
 
     mov eax, [Card]
     mov [edx + CRD_NextAnimRef], eax
+    mov eax, edx
+    mov edx, [Card]
+    mov [edx + CRD_PredAnimRef], eax
 
     ret
     endp
 proc Animation.Remove, Card
+
+    locals
+        Next    dd  ?
+    endl
 
     mov edx, AnimColumn
     .startloop1:
@@ -752,12 +842,39 @@ proc Animation.Remove, Card
     .finloop1:
 
     push edx
+
     mov eax, [edx + CRD_NextAnimRef]
     mov edx, eax
     mov eax, [edx + CRD_NextAnimRef]
+    mov [Next], eax
     mov DWORD [edx + CRD_NextAnimRef], 0
+    mov DWORD [edx + CRD_PredAnimRef], 0
+
     pop edx
+    mov eax, [Next]
     mov [edx + CRD_NextAnimRef], eax
+
+    test eax, eax
+    jz .finish
+
+    push edx
+    mov edx, eax
+    pop DWORD [edx + CRD_PredAnimRef]
+
+    .finish:
+    ret
+    endp
+proc Animation.FindEnd
+
+    mov edx, AnimColumn
+    .startloop1:
+        mov eax, [edx + CRD_NextAnimRef]
+        test eax, eax
+        jz .finloop1
+        mov edx, eax
+    jmp .startloop1
+    .finloop1:
+    mov eax, edx
 
     ret
     endp
@@ -993,6 +1110,7 @@ proc Map.CreateBackBuffer, hdc
     invoke FillRect, [hdcBackBuffer], RectClient, eax
 
     stdcall Map.DrawPointCounter, [hdcBackBuffer]
+    stdcall Map.DrawNewDecks, [hdcBackBuffer]
     stdcall Map.DrawStaticCards, [hdcBackBuffer]
 
 
@@ -1013,6 +1131,41 @@ proc Map.DrawStaticCards, hdc
         add edx, CRD_Size
     loop .startloop1
 
+    stdcall Map.DrawAnimation, [hdc]
+
+    ret
+    endp
+proc Map.DrawAnimation, hdc
+
+    stdcall Animation.FindEnd
+
+    .startloop1:
+        cmp eax, [AnimColumn]
+        je .finloop1
+        mov edx, eax
+        bt DWORD [edx + CRD_Info], INF_IsWait
+        jnc .finloop1
+        push edx
+        stdcall Card.Draw, edx, [hdc]
+        pop edx
+        mov eax, [edx + CRD_PredAnimRef]
+    jmp .startloop1
+    .finloop1:
+
+    mov edx, AnimColumn
+    .startloop2:
+        mov eax, [edx + CRD_NextAnimRef]
+        test eax, eax
+        jz .finloop2
+        mov edx, eax
+        bt DWORD [edx + CRD_Info], INF_IsWait
+        jc .finloop2
+        push edx
+        stdcall Card.Draw, edx, [hdc]
+        pop edx
+    jmp .startloop2
+    .finloop2:
+
     ret
     endp
 proc Map.DrawMovingCards, hdc
@@ -1029,7 +1182,7 @@ proc Map.DrawSolvingDecks, hdc
     endp
 proc Map.DrawNewDecks, hdc
 
-
+    stdcall Column.Draw, NewColumn, [hdc]
 
     ret
     endp
