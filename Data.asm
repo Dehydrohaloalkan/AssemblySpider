@@ -38,8 +38,8 @@ section '.sdata' data readable writeable
     font        LOGFONT 35, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
 
     _Texture            TCHAR   'res\cards.bmp', 0
-    BackCardIndex       dd      0
-    _PointsStr          db      'Points: 500', 0, 0
+    BackCardIndex       dd      1
+    _PointsStr          db      'Points:    ', 0, 0
     PointsStrLen        dd      ?
     hTextures           dd      ?
 
@@ -104,7 +104,7 @@ section '.gdata' data readable writeable
     ; Game Information
     Seed                    dd      ?
     RandPr                  dd      ?
-    Points                  dd      ?
+    Points                  dd      500
     saveX                   dd      ?
     saveY                   dd      ?
     SolvingDecksCount       dd      ?

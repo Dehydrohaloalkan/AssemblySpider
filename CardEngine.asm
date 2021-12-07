@@ -236,7 +236,6 @@ proc Game.OnMouseUp
         Card    dd  ?
     endl
 
-
     btr [Flags], IS_MOUSE_DOWN
 
     mov edx, [MovingColumn + CRD_NextRef]
@@ -255,6 +254,8 @@ proc Game.OnMouseUp
     cmp eax, [Column]
     je .moving
         push eax
+        stdcall Column.SetCardsAims, [Column]
+        stdcall Column.InitAnimation, [Column]
         stdcall Column.FindEnd, [Column]
         cmp eax, [Column]
         je .set
@@ -467,26 +468,83 @@ proc Column.NoAnimMove, Column
     endp
 proc Column.SetCardsIntervals, Column
 
+    locals
+        OpenInterval    dd  ?
+        CloseInterval   dd  ?
+        Workspace       dd  ?
+        LogicPoints     dd  ?
+    endl
+
+    xor ecx, ecx
     mov edx, [Column]
     .startloop1:
         mov eax, [edx + CRD_NextRef]
         test eax, eax
         jz .finloop1
         mov edx, eax
-        mov eax, [CardHeight]
-        shr eax, 3
-        mov [edx + CRD_Indent], eax
+        add ecx, 2
+        bt DWORD [edx + CRD_Info], INF_IsClose
+        sbb ecx, 0
     jmp .startloop1
     .finloop1:
+    add ecx, 10
+    mov [LogicPoints], ecx
+
+    mov eax, [RectClient.bottom]
+    shr eax, 2
+    mov edx, 3
+    mul edx
+    mov [Workspace], eax
+
+    mov eax, [CardHeight]
+    shr eax, 2
+    mov [OpenInterval], eax
+    shr eax, 1
+    mov [CloseInterval], eax
+
+    mov edx, [LogicPoints]
+    mul edx
+
+    cmp eax, [Workspace]
+    jl .endcalculate
+
+        mov eax, [Workspace]
+        xor edx, edx
+        div ecx
+        mov [CloseInterval], eax
+        shl eax, 1
+        mov [OpenInterval], eax
+
+    .endcalculate:
+    mov edx, [Column]
+    .startloop2:
+        mov eax, [edx + CRD_NextRef]
+        test eax, eax
+        jz .finloop2
+        mov edx, eax
+        bt DWORD [edx + CRD_Info], INF_IsClose
+        jc .closecard
+            mov eax, [OpenInterval]
+            mov [edx + CRD_Indent], eax
+            jmp .startloop2
+        .closecard:
+            mov eax, [CloseInterval]
+            mov [edx + CRD_Indent], eax
+            jmp .startloop2
+    .finloop2:
 
     ret
     endp
 proc Column.Draw, Column, hdc
 
-    mov edx, [Column]
-    mov eax, [edx + CRD_NextRef]
-    test eax, eax
-    jz .empty
+    cmp [Column], MovingColumn
+    je .looppreparation
+        stdcall Column.DrawEmpty, edx, [hdc]
+    .looppreparation:
+        mov edx, [Column]
+        mov eax, [edx + CRD_NextRef]
+        test eax, eax
+        jz .finish
     .startloop1:
         mov edx, eax
         push edx
@@ -495,12 +553,8 @@ proc Column.Draw, Column, hdc
         mov eax, [edx + CRD_NextRef]
         test eax, eax
         jnz .startloop1
-        jmp .finish
-    .empty:
-        cmp [Column], MovingColumn
-        je .finish
-        stdcall Column.DrawEmpty, edx, [hdc]
     .finish:
+
     ret
     endp
 proc Column.DrawEmpty, Column, hdc
@@ -520,19 +574,25 @@ proc Column.DrawEmpty, Column, hdc
     invoke SelectObject, [hdc], eax
     mov [hpen], eax
 
-    push 10 10
+    push 20 20
     mov edx, [Column]
 
     mov eax, [edx + CRD_YCord]
     add eax, [CardHeight]
+    sub eax, 4
     push eax
 
     mov eax, [edx + CRD_XCord]
     add eax, [CardWigth]
+    sub eax, 4
     push eax
 
-    push DWORD [edx + CRD_YCord]
-    push DWORD [edx + CRD_XCord]
+    mov eax, [edx + CRD_YCord]
+    add eax, 2
+    push eax
+    mov eax, [edx + CRD_XCord]
+    add eax, 2
+    push eax
     invoke RoundRect, [hdc]
 
     invoke SelectObject, [hdc], [hpen]
@@ -932,6 +992,7 @@ proc Map.CreateBackBuffer, hdc
     push eax
     invoke FillRect, [hdcBackBuffer], RectClient, eax
 
+    stdcall Map.DrawPointCounter, [hdcBackBuffer]
     stdcall Map.DrawStaticCards, [hdcBackBuffer]
 
 
@@ -982,7 +1043,7 @@ proc Map.DrawPointCounter, hdc
 
     stdcall IntToStr, [Points], _PointsStr + 8
 
-    push [_PointsStrLen]
+    push [PointsStrLen]
     push _PointsStr
     mov eax, [RectClient.bottom]
     sub eax, [DownInterval]
