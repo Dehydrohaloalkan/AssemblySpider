@@ -69,6 +69,7 @@ section '.gdata' data readable writeable
             INF_IsPop       = 13
             INF_IsMove      = 14
             INF_IsWait      = 15
+            INF_IsNedColRep = 16
         CRD_XCord       = 4
         CRD_YCord       = 8
         CRD_XAnim       = 12

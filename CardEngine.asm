@@ -1,8 +1,6 @@
 
 section '.cardEn' code readable executable
 
-; TODO Можно переместить карту под анимацию
-
 proc Game.PreInitCards
 
     xor edx, edx
@@ -246,7 +244,6 @@ proc Game.OnPaint, hwnd
         btr [Flags], IS_NeedAnim
         jnc .skipanimation
         stdcall Game.CardsReplace
-        btr [Flags], IS_NeedAnim
     .skipanimation:
 
     stdcall Map.Draw, [hdcDoubleBuffer]
@@ -260,6 +257,9 @@ proc Game.OnMouseDown, hwnd
     mov [saveY], eax
     mov eax, [LowWord]
     mov [saveX], eax
+
+    bt [Flags], IS_NeedAnim
+    jc .skip
 
     stdcall Game.FindCard, [saveX], [saveY]
     test eax, eax
@@ -1455,10 +1455,11 @@ proc Map.DrawAnimation, hdc
         je .finloop1
         mov edx, eax
         bt DWORD [edx + CRD_Info], INF_IsWait
-        jnc .finloop1
+        jnc .next
         push edx
         stdcall Card.Draw, edx, [hdc]
         pop edx
+        .next:
         mov eax, [edx + CRD_PredAnimRef]
     jmp .startloop1
     .finloop1:
@@ -1470,7 +1471,7 @@ proc Map.DrawAnimation, hdc
         jz .finloop2
         mov edx, eax
         bt DWORD [edx + CRD_Info], INF_IsWait
-        jc .finloop2
+        jc .startloop2
         push edx
         stdcall Card.Draw, edx, [hdc]
         pop edx
