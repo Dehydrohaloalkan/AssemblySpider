@@ -2,7 +2,8 @@
 CARD_RESOLUTION_X   = 71 * 2
 CARD_RESOLUTION_Y   = 96 * 2
 MIXER               = 500
-ANIMATION_TIME      = 8
+ANIMATION_TIME      = 6
+DEFAULT_ANIM_WAIT   = 2
 
 GAME_BCK_COLOR      = 0053771Bh
 PERS_BCK_COLOR      = 0042CDFFh
@@ -15,8 +16,6 @@ PERS_INDENT         = 15
 PERS_FONT           = 20
 PERS_X              = PERS_X_COUNT * PERS_CARD_WIGTH + (PERS_X_COUNT + 1) * PERS_INDENT
 PERS_Y              = PERS_Y_COUNT * PERS_CARD_HEIGHT + (PERS_Y_COUNT + 1) * PERS_INDENT + PERS_FONT
-
-
 
 section '.sdata' data readable writeable
 
@@ -38,7 +37,7 @@ section '.sdata' data readable writeable
     font        LOGFONT 35, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, DEFAULT_PITCH, 0
 
     _Texture            TCHAR   'res\cards.bmp', 0
-    BackCardIndex       dd      1
+    BackCardIndex       dd      0
     _PointsStr          db      'Points:    ', 0, 0
     PointsStrLen        dd      ?
     hTextures           dd      ?
@@ -96,11 +95,13 @@ section '.gdata' data readable writeable
     MovingColumn    dd  1 * CRD_SizeD dup ?
     AnimColumn      dd  1 * CRD_SizeD dup ?
     NewColumn       dd  1 * CRD_SizeD dup ?
-    SolvingColumn   dd  1 * CRD_SizeD dup ?
+    SolveColumn     dd  1 * CRD_SizeD dup ?
 
     IS_GAME                 =       0
     IS_Animation            =       1
-    IS_MOUSE_DOWN           =       2
+    IS_Mouse_Down           =       2
+    IS_NeedCheck            =       3
+    IS_NeedAnim             =       4
     Flags                   dd      0
     Clock                   dd      ?
 
@@ -110,9 +111,8 @@ section '.gdata' data readable writeable
     Points                  dd      500
     saveX                   dd      ?
     saveY                   dd      ?
-    SolvingDecksCount       dd      ?
-    SolvingInformation      dd      8       dup     ?
-    NewDecksCount           dd      5
+    SolveCount              dd      0
+    NewCount                dd      5
 
     ; Metrics
     CardHeight              dd      ?
