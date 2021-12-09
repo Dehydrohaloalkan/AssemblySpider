@@ -244,6 +244,7 @@ proc Game.OnPaint, hwnd
         btr [Flags], IS_NeedAnim
         jnc .skipanimation
         stdcall Game.CardsReplace
+        btr [Flags], IS_CanMove
     .skipanimation:
 
     stdcall Map.Draw, [hdcDoubleBuffer]
@@ -258,7 +259,7 @@ proc Game.OnMouseDown, hwnd
     mov eax, [LowWord]
     mov [saveX], eax
 
-    bt [Flags], IS_NeedAnim
+    bt [Flags], IS_CanMove
     jc .skip
 
     stdcall Game.FindCard, [saveX], [saveY]
@@ -1016,6 +1017,7 @@ proc NewColumn.GetNewCards
     endl
 
     bts [Flags], IS_NeedAnim
+    bts [Flags], IS_CanMove
     dec [NewCount]
     stdcall Column.FindEnd, NewColumn
     mov [Card], eax

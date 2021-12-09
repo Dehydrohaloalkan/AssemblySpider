@@ -103,6 +103,7 @@ section '.gdata' data readable writeable
     IS_Mouse_Down           =       2
     IS_NeedCheck            =       3
     IS_NeedAnim             =       4
+    IS_CanMove              =       5
     Flags                   dd      0
     Clock                   dd      ?
 
