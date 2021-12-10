@@ -430,7 +430,7 @@ proc Metrics.Calculate
     mov [Indent], eax
 
     mov eax, [CardWigth]
-    shr eax, 3
+    shr eax, 2
     mov [DownInterval], eax
 
     ret
