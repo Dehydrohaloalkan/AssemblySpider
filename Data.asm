@@ -2,8 +2,8 @@
 CARD_RESOLUTION_X   = 71 * 2
 CARD_RESOLUTION_Y   = 96 * 2
 MIXER               = 500
-ANIMATION_TIME      = 6
-DEFAULT_ANIM_WAIT   = 2
+ANIMATION_TIME      = 8
+DEFAULT_ANIM_WAIT   = 4
 
 GAME_BCK_COLOR      = 0053771Bh
 PERS_BCK_COLOR      = 0042CDFFh
@@ -104,6 +104,7 @@ section '.gdata' data readable writeable
     IS_NeedCheck            =       3
     IS_NeedAnim             =       4
     IS_CanMove              =       5
+    IS_NeedBB               =       6
     Flags                   dd      0
     Clock                   dd      ?
 

@@ -132,10 +132,10 @@ proc Game.Start
         mov [edx + CRD_YCord], eax
         pop eax
         push ecx eax edx
-        stdcall Card.InitAnimation, edx, 0, 2;eax, 12
+        stdcall Card.InitAnimation, edx, eax, 12
         pop edx eax ecx
         add edx, CRD_Size
-        add eax, 4
+        add eax, 2
     loop .startloop2
 
     ret
@@ -233,7 +233,6 @@ proc Game.OnPaint, hwnd
         bts [Flags], IS_NeedCheck
         stdcall Animation.Run
         add [Clock], eax
-        MCreateBackBuffer
         jmp .skipanimation
     .afteranimation:
         btr [Flags], IS_NeedCheck
@@ -246,6 +245,10 @@ proc Game.OnPaint, hwnd
         stdcall Game.CardsReplace
         btr [Flags], IS_CanMove
     .skipanimation:
+        btr [Flags], IS_NeedBB
+        jnc .noneed
+            MCreateBackBuffer
+        .noneed:
 
     stdcall Map.Draw, [hdcDoubleBuffer]
 
@@ -1159,8 +1162,8 @@ proc Animation.Remove, Card
     push edx
     mov edx, eax
     pop DWORD [edx + CRD_PredAnimRef]
-
     .finish:
+        bts [Flags], IS_NeedBB
     ret
     endp
 proc Animation.FindEnd
@@ -1407,6 +1410,7 @@ proc Map.Draw, hdc
 
     invoke BitBlt, [hdc], 0, 0, [RectClient.right], [RectClient.bottom], [hdcBackBuffer], 0, 0, SRCCOPY
     stdcall Map.DrawMovingCards, [hdc]
+    stdcall Map.DrawAnimation, [hdc]
 
     invoke DeleteDC, [hdcBackBuffer]
 
@@ -1443,8 +1447,6 @@ proc Map.DrawStaticCards, hdc
         pop edx ecx
         add edx, CRD_Size
     loop .startloop1
-
-    stdcall Map.DrawAnimation, [hdc]
 
     ret
     endp
