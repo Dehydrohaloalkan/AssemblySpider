@@ -6,7 +6,7 @@ include 'Macros.asm'
 
 section '.code' code readable executable
 
-stdcall Game.OnSize
+stdcall SolveColumn.SetPositions
 stdcall Game.OnPaint
 
 start:

@@ -140,6 +140,93 @@ proc Game.Start
 
     ret
     endp
+proc Game.InitEnd
+
+    locals
+        EndX    dd  ?
+        EndY    dd  ?
+        DelX    dd  ?
+        DelY    dd  ?
+        Wait    dd  0
+    endl
+
+    mov [SolveCount], 0
+    bts [Flags], IS_GameEnd
+
+    mov eax, [RectClient.right]
+    mov ecx, 13
+    xor edx, edx
+    div ecx
+    mov [DelX], eax
+
+    mov eax, [RectClient.bottom]
+    xor edx, edx
+    div ecx
+    mov [DelY], eax
+
+    mov [EndX], 0
+    mov [EndY], 0
+
+    stdcall Column.FindEnd, SolveColumn
+    mov edx, eax
+
+    mov ecx, 4
+    .startloop1:
+        push ecx
+        mov ecx, 13
+        .startloop2:
+            push ecx
+                mov eax, [EndX]
+                mov [edx + CRD_XAim], eax
+                mov eax, [EndY]
+                mov [edx + CRD_YAim], eax
+                push edx
+                    stdcall Card.InitAnimation, edx, [Wait], ANIMATION_TIME * 2
+                pop edx
+                mov DWORD [edx + CRD_AnimCount], ANIMATION_TIME * 4
+                mov DWORD [edx + CRD_XAim], -1000
+                mov DWORD [edx + CRD_YAim], -1000
+
+                mov eax, [edx + CRD_PredRef]
+                mov edx, eax
+                add [Wait], 1
+
+                mov eax, [DelX]
+                add [EndX], eax
+                mov eax, [DelY]
+                add [EndX], eax
+            pop ecx
+        loop .startloop2
+        mov ecx, 13
+        .startloop3:
+            push ecx
+                mov eax, [EndX]
+                mov [edx + CRD_XAim], eax
+                mov eax, [EndY]
+                mov [edx + CRD_YAim], eax
+                push edx
+                    stdcall Card.InitAnimation, edx, [Wait], ANIMATION_TIME * 2
+                pop edx
+                mov DWORD [edx + CRD_AnimCount], ANIMATION_TIME * 4
+                mov DWORD [edx + CRD_XAim], -1000
+                mov DWORD [edx + CRD_YAim], -1000
+
+                mov eax, [edx + CRD_PredRef]
+                mov edx, eax
+                add [Wait], 1
+
+                mov eax, [DelX]
+                sub [EndX], eax
+                mov eax, [DelY]
+                sub [EndX], eax
+            pop ecx
+        loop .startloop3
+        pop ecx
+    dec ecx
+    jnz .startloop1
+
+    ret
+    endp
 proc Game.FindColumn, XCord, YCord
 
     mov eax, [XCord]
@@ -237,13 +324,18 @@ proc Game.OnPaint, hwnd
     .afteranimation:
         btr [Flags], IS_NeedCheck
         jnc .check
-        stdcall Game.Solve
+            stdcall Game.Solve
         jmp .skipanimation
         .check:
         btr [Flags], IS_NeedAnim
-        jnc .skipanimation
-        stdcall Game.CardsReplace
-        btr [Flags], IS_CanMove
+        jnc .end
+            stdcall Game.CardsReplace
+            btr [Flags], IS_CanMove
+        jmp .skipanimation
+        .end:
+        cmp [SolveCount], 8
+        jne .skipanimation
+            stdcall Game.InitEnd
     .skipanimation:
         btr [Flags], IS_NeedBB
         jnc .noneed
@@ -1097,6 +1189,8 @@ proc SolveColumn.SetCardsAims
 proc SolveColumn.SetPositions
 
     stdcall SolveColumn.SetCardsAims
+    bt [Flags], IS_GameEnd
+    jc .finloop1
 
     mov edx, SolveColumn
     .startloop1:
@@ -1291,7 +1385,9 @@ proc Card.InitAnimation, Card, WaitTime, AnimTime
         mov [edx + CRD_AnimWait], eax
     .anim:
         bts DWORD [edx + CRD_Info], INF_IsAnim
-
+        jc .start
+        stdcall Animation.Append, edx
+    .start:
 
     ;mov DWORD [edx + CRD_AnimCount], 0
     ;mov eax, [edx + CRD_XAim]
@@ -1301,7 +1397,7 @@ proc Card.InitAnimation, Card, WaitTime, AnimTime
     ;cmp eax, [edx + CRD_YCord]
     ;je .finish
 
-    .start:
+
     mov eax, [edx + CRD_XAim]
     sub eax, [edx + CRD_XCord]
     cdq
@@ -1324,9 +1420,8 @@ proc Card.InitAnimation, Card, WaitTime, AnimTime
     mov eax, [AnimTime]
     mov [edx + CRD_AnimCount], eax
 
-    .finish:
-        stdcall Animation.Append, edx
-        bts [Flags], IS_Animation
+    bts [Flags], IS_Animation
+
     ret
     endp
 proc Card.Animation, Card
