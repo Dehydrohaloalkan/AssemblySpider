@@ -348,7 +348,7 @@ proc Game.OnMouseDown, hwnd
 
     bt [Flags], IS_GameEnd
     jnc .start
-        invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0 
+        invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0
         jmp .skip
     .start:
     bts [Flags], IS_Mouse_Down
@@ -1380,6 +1380,15 @@ proc Card.InitAnimation, Card, WaitTime, AnimTime
 
     mov edx, [Card]
 
+    mov DWORD [edx + CRD_AnimCount], 0
+    mov eax, [edx + CRD_XAim]
+    cmp eax, [edx + CRD_XCord]
+    jne .add
+    mov eax, [edx + CRD_YAim]
+    cmp eax, [edx + CRD_YCord]
+    je .finish
+
+    .add:
     mov eax, [WaitTime]
     test eax, eax
     jz .anim
@@ -1390,15 +1399,6 @@ proc Card.InitAnimation, Card, WaitTime, AnimTime
         jc .start
         stdcall Animation.Append, edx
     .start:
-
-    ;mov DWORD [edx + CRD_AnimCount], 0
-    ;mov eax, [edx + CRD_XAim]
-    ;cmp eax, [edx + CRD_XCord]
-    ;jne .start
-    ;mov eax, [edx + CRD_YAim]
-    ;cmp eax, [edx + CRD_YCord]
-    ;je .finish
-
 
     mov eax, [edx + CRD_XAim]
     sub eax, [edx + CRD_XCord]
@@ -1424,6 +1424,7 @@ proc Card.InitAnimation, Card, WaitTime, AnimTime
 
     bts [Flags], IS_Animation
 
+    .finish:
     ret
     endp
 proc Card.Animation, Card
