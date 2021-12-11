@@ -232,18 +232,10 @@ proc CheckProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmclose
     cmp [wmsg], WM_COMMAND
     je .wmcommand
-    cmp [wmsg], WM_KEYDOWN
-    je .wmkeydown
 
     .defwndproc:
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
         jmp .finish
-    .wmkeydown:
-        xor eax, eax
-        cmp [wparam], VK_HOME
-        jne .finish
-            bts [Flags], IS_DBG
-            jmp .finish
     .wmcommand:
 
         mov [Seed], 1
@@ -288,7 +280,7 @@ proc CheckProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
             cmp eax, 0
             je .finish
 
-                stdcall Game.Start, [Seed], 1
+                stdcall Game.Start, 1, 1
                 jmp .wmclose
 
         jmp .finish
