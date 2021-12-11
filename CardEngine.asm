@@ -328,7 +328,6 @@ proc Game.OnPaint, hwnd
         btr [Flags], IS_NeedAnim
         jnc .end
             stdcall Game.CardsReplace
-            btr [Flags], IS_CanMove
         jmp .skipanimation
         .end:
         cmp [SolveCount], 8
@@ -356,9 +355,6 @@ proc Game.OnMouseDown, hwnd
     mov [saveY], eax
     mov eax, [LowWord]
     mov [saveX], eax
-
-    bt [Flags], IS_CanMove
-    jc .skip
 
     stdcall Game.FindCard, [saveX], [saveY]
     test eax, eax
@@ -1114,7 +1110,6 @@ proc NewColumn.GetNewCards
     endl
 
     bts [Flags], IS_NeedAnim
-    bts [Flags], IS_CanMove
     dec [NewCount]
     stdcall Column.FindEnd, NewColumn
     mov [Card], eax
@@ -1507,8 +1502,8 @@ proc Map.Draw, hdc
     invoke SelectObject, [hdcBackBuffer], [hBackBuffer]
 
     invoke BitBlt, [hdc], 0, 0, [RectClient.right], [RectClient.bottom], [hdcBackBuffer], 0, 0, SRCCOPY
-    stdcall Map.DrawMovingCards, [hdc]
     stdcall Map.DrawAnimation, [hdc]
+    stdcall Map.DrawMovingCards, [hdc]
 
     invoke DeleteDC, [hdcBackBuffer]
 
