@@ -1,11 +1,11 @@
 
 ;section '.persEn' code readable executable
 
-proc DrawPers uses esi edi, hDC
+proc DrawPers uses esi edi, hdc
 
     invoke CreateSolidBrush, PERS_BCK_COLOR
     push eax
-    invoke FillRect, [hDC], RectPers, eax
+    invoke FillRect, [hdc], RectPers, eax
     pop eax
     invoke DeleteObject, eax
 
@@ -13,45 +13,46 @@ proc DrawPers uses esi edi, hDC
     mov [font.lfHeight], PERS_FONT
     stdcall CopyStr, font.lfFaceName, _persfont
 
-    invoke SetTextAlign, [hDC], TA_CENTER + TA_TOP
-    invoke SetBkMode, [hDC], TRANSPARENT
+    invoke SetTextAlign, [hdc], TA_CENTER + TA_TOP
+    invoke SetBkMode, [hdc], TRANSPARENT
     invoke CreateFontIndirect, font
-    invoke SelectObject, [hDC], eax
+    invoke SelectObject, [hdc], eax
     push eax
 
         mov eax, PERS_X
         shr eax, 1
         mov edx, PERS_INDENT
         shr edx, 1
-        invoke TextOut, [hDC], eax, edx, _persstr, 22
+        invoke TextOut, [hdc], eax, edx, _persstr, 22
 
     pop eax
-    invoke SelectObject, [hDC], eax
+    invoke SelectObject, [hdc], eax
     invoke DeleteObject, eax
 
     pop [font.lfHeight]
     stdcall CopyStr, font.lfFaceName, _fontname
 
-    mov esi, PERS_INDENT
-    mov edi, PERS_INDENT + PERS_FONT
     push [BackCardIndex] [CardWigth] [CardHeight]
-    mov [BackCardIndex], 0
     mov [CardWigth], PERS_CARD_WIGTH
     mov [CardHeight], PERS_CARD_HEIGHT
 
+    mov [PersCard + CRD_XCord], PERS_INDENT
+    mov [PersCard + CRD_YCord], PERS_INDENT + PERS_FONT
+
+    mov [BackCardIndex], 0
+    mov ecx, 4
     .startloop1:
+        push ecx
+        stdcall Card.Close, PersCard
+        stdcall Card.Draw, PersCard, [hdc]
+        pop ecx
 
-        stdcall GetTextureCardIndex, 10h
-        stdcall DrawCard, [hDC], esi, edi
-
-        add esi, PERS_CARD_WIGTH + PERS_INDENT
-        cmp esi, PERS_X
-        jne .continue
-
-            mov esi, PERS_INDENT
-            add edi, PERS_CARD_HEIGHT + PERS_INDENT
-
-        .continue:
+        add [PersCard + CRD_XCord], PERS_CARD_WIGTH + PERS_INDENT
+        loop .skip
+            mov ecx, 4
+            mov [PersCard + CRD_XCord], PERS_INDENT
+            add [PersCard + CRD_YCord], PERS_CARD_HEIGHT + PERS_INDENT
+        .skip:
 
     inc [BackCardIndex]
     cmp [BackCardIndex], 12

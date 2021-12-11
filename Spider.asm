@@ -34,7 +34,6 @@ start:
     stdcall CopyStr, font.lfFaceName, _fontname
 
     invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0
-    ;stdcall Game.Start
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0
@@ -193,7 +192,7 @@ proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
     .wmpaint:
         invoke BeginPaint, [hwnd], ps
-        ;stdcall DrawPers, eax
+        stdcall DrawPers, eax
         invoke EndPaint, [hwnd], ps
         jmp .finish
     .wmlbuttondown:
@@ -208,7 +207,20 @@ proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         stdcall FindBackCard
 
         mov [BackCardIndex], eax
-        bts [Flags], IS_Animation
+        mov edx, Cards
+        mov ecx, 104
+        .startloop1:
+            push ecx
+            bt DWORD [edx + CRD_Info], INF_IsClose
+            jnc .skip
+                push edx
+                stdcall Card.SetTextureCords, edx
+                pop edx
+            .skip:
+            add edx, CRD_Size
+            pop ecx
+        loop .startloop1
+        bts [Flags], IS_NeedBB
 
         jmp .finish
 

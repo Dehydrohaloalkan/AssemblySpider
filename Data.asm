@@ -97,6 +97,7 @@ section '.gdata' data readable writeable
     AnimColumn      dd  1 * CRD_SizeD dup ?
     NewColumn       dd  1 * CRD_SizeD dup ?
     SolveColumn     dd  1 * CRD_SizeD dup ?
+    PersCard        dd  1 * CRD_SizeD dup ?
 
     IS_GAME                 =       0
     IS_Animation            =       1

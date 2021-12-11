@@ -18,7 +18,7 @@ proc Game.PreInitColumns
     .startloop1:
         mov [Columns + edx], 0
     add edx, 4
-    cmp edx, 14 * CRD_Size
+    cmp edx, 15 * CRD_Size
     jne .startloop1
 
     ret
