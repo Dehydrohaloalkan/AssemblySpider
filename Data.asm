@@ -112,11 +112,11 @@ section '.gdata' data readable writeable
     ; Game Information
     Seed                    dd      ?
     RandPr                  dd      ?
-    Points                  dd      500
+    Points                  dd      ?
     saveX                   dd      ?
     saveY                   dd      ?
     SolveCount              dd      0
-    NewCount                dd      5
+    NewCount                dd      0
 
     ; Metrics
     CardHeight              dd      ?

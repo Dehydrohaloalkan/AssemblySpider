@@ -16,9 +16,9 @@ proc Game.PreInitColumns
 
     xor edx, edx
     .startloop1:
-        mov [Cards + edx], 0
+        mov [Columns + edx], 0
     add edx, 4
-    cmp edx, 12 * CRD_Size
+    cmp edx, 14 * CRD_Size
     jne .startloop1
 
     ret
@@ -71,11 +71,9 @@ proc Game.SetStartLayOut
 
         .startloop2:
             push ecx
-
             stdcall Card.Close, [Card]
-            stdcall Column.Append, [Column], [Card]
+            stdcall Column.Replace, [Column], [Card]
             add [Card], CRD_Size
-
             pop ecx
         loop .startloop2
 
@@ -89,21 +87,34 @@ proc Game.SetStartLayOut
 
     ret
     endp
-proc Game.Start
+proc Game.Start, Seed, SuitCount
 
-    locals
-        StartX  dd  ?
-        StartY  dd  ?
-    endl
+    mov [Flags], 0
+    mov [Points], 500
+    bts [Flags], IS_GAME
+    bts [Flags], IS_NeedBB
 
     stdcall Game.PreInitCards
     stdcall Game.PreInitColumns
-    stdcall Game.InitCardInfo, 1
+    stdcall Game.InitCardInfo, [SuitCount]
+
     stdcall Metrics.Calculate
     stdcall Metrics.SetColumnPositions
-    stdcall Game.SetStartLayOut
-    stdcall NewColumn.InfoInit
+
+
+    mov [NewCount], 5
+    stdcall NewColumn.InitStart
     stdcall NewColumn.SetPositions
+
+    stdcall Game.SetStartLayOut
+    stdcall Game.InitStart
+
+
+
+
+    ret
+    endp
+proc Game.InitStart
 
     mov ecx, 10
     mov edx, Columns
@@ -114,28 +125,15 @@ proc Game.Start
         add edx, CRD_Size
     loop .startloop1
 
-    stdcall Column.FindEnd, NewColumn
-    mov edx, eax
-    mov eax, [edx + CRD_XCord]
-    mov [StartX], eax
-    mov eax, [edx + CRD_YCord]
-    mov [StartY], eax
-
     mov ecx, 54
     mov edx, Cards
     mov eax, 0
     .startloop2:
-        push eax
-        mov eax, [StartX]
-        mov [edx + CRD_XCord], eax
-        mov eax, [StartY]
-        mov [edx + CRD_YCord], eax
-        pop eax
         push ecx eax edx
-        stdcall Card.InitAnimation, edx, eax, 12
+        stdcall Card.InitAnimation, edx, eax, ANIMATION_TIME * 2
         pop edx eax ecx
         add edx, CRD_Size
-        add eax, 2
+        add eax, DEFAULT_ANIM_WAIT / 2
     loop .startloop2
 
     ret
@@ -348,6 +346,11 @@ proc Game.OnPaint, hwnd
     endp
 proc Game.OnMouseDown, hwnd
 
+    bt [Flags], IS_GameEnd
+    jnc .start
+        invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0 
+        jmp .skip
+    .start:
     bts [Flags], IS_Mouse_Down
     mov eax, [HighWord]
     mov [saveY], eax
@@ -994,10 +997,10 @@ proc Column.CheckSolving, Column
     endp
 
 
-proc NewColumn.InfoInit
+proc NewColumn.InitStart
 
     mov edx, Cards + 103 * CRD_Size
-    mov ecx, 50
+    mov ecx, 104
     .startloop1:
         push ecx edx
         stdcall Column.Append, NewColumn, edx
@@ -1030,29 +1033,28 @@ proc NewColumn.SetPositions
     mov ecx, [NewCount]
     test ecx, ecx
     jz .finish
-    mov eax, [NewColumn + CRD_NextRef]
-    test eax, eax
-    jz .finish
-    mov edx, eax
-    .startloop1:
-        push ecx
 
-        mov ecx, 10
-        .startloop2:
-            mov eax, [XCord]
-            mov [edx + CRD_XCord], eax
-            mov eax, [YCord]
-            mov [edx + CRD_YCord], eax
-            mov eax, [edx + CRD_NextRef]
-            mov edx, eax
-        loop .startloop2
+    mov ecx, 10
+    mov edx, NewColumn
+    .startloop1:
+        mov eax, [edx + CRD_NextRef]
+        test eax, eax
+        jz .finloop1
+        mov edx, eax
 
         mov eax, [XCord]
-        sub eax, [DownInterval]
-        mov [XCord], eax
+        mov [edx + CRD_XCord], eax
+        mov eax, [YCord]
+        mov [edx + CRD_YCord], eax
 
-        pop ecx
-    loop .startloop1
+        loop .skip
+            mov ecx, 10
+            mov eax, [DownInterval]
+            sub [XCord], eax
+        .skip:
+
+    jmp .startloop1
+    .finloop1:
 
     .finish:
     ret
@@ -1521,10 +1523,13 @@ proc Map.CreateBackBuffer, hdc
     push eax
     invoke FillRect, [hdcBackBuffer], RectClient, eax
 
-    stdcall Map.DrawPointCounter, [hdcBackBuffer]
-    stdcall Map.DrawNewDecks, [hdcBackBuffer]
     stdcall Map.DrawStaticCards, [hdcBackBuffer]
-    stdcall Map.DrawSolveDecks, [hdcBackBuffer]
+    bt [Flags], IS_GAME
+    jnc .skip
+        stdcall Map.DrawPointCounter, [hdcBackBuffer]
+        stdcall Map.DrawNewDecks, [hdcBackBuffer]
+        stdcall Map.DrawSolveDecks, [hdcBackBuffer]
+    .skip:
 
     invoke DeleteDC, [hdcBackBuffer]
     pop eax

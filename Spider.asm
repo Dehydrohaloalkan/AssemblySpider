@@ -6,8 +6,8 @@ include 'Macros.asm'
 
 section '.code' code readable executable
 
-stdcall SolveColumn.SetPositions
-stdcall Game.OnPaint
+stdcall NewColumn.SetPositions
+stdcall Game.Start
 
 start:
     invoke GetModuleHandle, 0
@@ -33,8 +33,8 @@ start:
     stdcall LoadImages
     stdcall CopyStr, font.lfFaceName, _fontname
 
-    ;invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0
-    stdcall Game.Start
+    invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0
+    ;stdcall Game.Start
 
     msg_loop:
         invoke GetMessage, msg, NULL, 0, 0
@@ -63,6 +63,10 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmmousemove
     cmp [wmsg], WM_LBUTTONUP
     je .wmlbuttonup
+    cmp [wmsg], WM_GETMINMAXINFO
+    je .wmgetminmaxinfo
+    cmp [wmsg], WM_COMMAND
+    je .wmcommand
 
 
     .defwndproc:
@@ -121,13 +125,63 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         stdcall GetLHparam, [lparam], LowWord, HighWord
         stdcall Game.OnMouseUp
         jmp .finish
+    .wmgetminmaxinfo:
+
+        mov edx, [lparam]
+        add edx, 24
+        mov DWORD [edx], 1000
+        mov DWORD [edx + 4], 750
+
+        jmp .finish
+    .wmcommand:
+
+        mov eax, [wparam]
+        and eax, 0FFFFh
+
+        cmp eax, IDM_NEW
+        je .idmnew
+        cmp eax, IDM_RESTART
+        je .idmrestart
+        cmp eax, IDM_EXIT
+        je .idmexit
+        cmp eax, IDM_PERS
+        je .idmpers
+
+        .idmnew:
+            invoke DialogBoxParam, [wc.hInstance], GAME_CBOX, HWND_DESKTOP, CheckProc, 0
+            jmp .finish
+        .idmrestart:
+            stdcall Game.Start, [Seed], 1
+            jmp .finish
+        .idmpers:
+            mov [RectPers.top], 0
+            mov [RectPers.left], 0
+            mov [RectPers.right], PERS_X
+            mov [RectPers.bottom], PERS_Y
+
+            invoke AdjustWindowRect, RectPers, WS_VISIBLE+WS_SYSMENU, 1
+
+            mov eax, [RectPers.left]
+            sub [RectPers.right], eax
+            mov eax, [RectPers.top]
+            sub [RectPers.bottom], eax
+
+            invoke CreateWindowEx, 0, _perscl, _perstitle, WS_VISIBLE+WS_SYSMENU,\
+                   CW_USEDEFAULT, CW_USEDEFAULT, [RectPers.right], [RectPers.bottom], [hwnd], NULL, [pc.hInstance], NULL
+
+            mov [RectPers.top], 0
+            mov [RectPers.left], 0
+            mov [RectPers.right], PERS_X
+            mov [RectPers.bottom], PERS_Y
+
+            jmp .finish
+        .idmexit:
     .wmdestroy:
         invoke PostQuitMessage,0
         xor eax, eax
     .finish:
         ret
     endp
-
 proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     cmp [wmsg], WM_PAINT
     je .wmpaint
@@ -157,6 +211,67 @@ proc PersProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         bts [Flags], IS_Animation
 
         jmp .finish
+
+    .finish:
+        ret
+    endp
+proc CheckProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
+    cmp [wmsg], WM_CLOSE
+    je .wmclose
+    cmp [wmsg], WM_COMMAND
+    je .wmcommand
+
+    .defwndproc:
+        invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
+        jmp .finish
+    .wmcommand:
+
+        invoke GetTickCount
+        ;mov [Seed], eax
+        mov [Seed], 1
+
+        cmp [wparam], IDB_OKBUTTON
+        je .idbokbutton
+        cmp [wparam], IDB_CANCELBUTTON
+        je .wmclose
+        jmp .finish
+
+        .idbokbutton:
+
+            invoke IsDlgButtonChecked, [hwnd], IDC_1SUIT
+            cmp eax, 0
+            je .2suit
+
+                stdcall Game.Start, [Seed], 1
+                jmp .wmclose
+
+            .2suit:
+            invoke IsDlgButtonChecked, [hwnd], IDC_2SUIT
+            cmp eax, 0
+            je .4suit
+
+                stdcall Game.Start, [Seed], 2
+                jmp .wmclose
+
+            .4suit:
+            invoke IsDlgButtonChecked, [hwnd], IDC_4SUIT
+            cmp eax, 0
+            je .load
+
+                stdcall Game.Start, [Seed], 4
+                jmp .wmclose
+
+            .load:
+            invoke IsDlgButtonChecked, [hwnd], IDC_LOAD
+            cmp eax, 0
+            je .finish
+
+                stdcall Game.Start, [Seed], 1
+                jmp .wmclose
+
+        jmp .finish
+    .wmclose:
+        invoke EndDialog, [hwnd], 0
 
     .finish:
         ret
