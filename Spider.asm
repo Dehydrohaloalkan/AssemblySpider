@@ -6,8 +6,8 @@ include 'Macros.asm'
 
 section '.code' code readable executable
 
-stdcall NewColumn.SetPositions
-stdcall Game.Start
+stdcall Game.MixCards
+stdcall CheckProc
 
 start:
     invoke GetModuleHandle, 0
@@ -232,16 +232,26 @@ proc CheckProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmclose
     cmp [wmsg], WM_COMMAND
     je .wmcommand
+    cmp [wmsg], WM_KEYDOWN
+    je .wmkeydown
 
     .defwndproc:
         invoke DefWindowProc, [hwnd], [wmsg], [wparam], [lparam]
         jmp .finish
+    .wmkeydown:
+        xor eax, eax
+        cmp [wparam], VK_HOME
+        jne .finish
+            bts [Flags], IS_DBG
+            jmp .finish
     .wmcommand:
 
-        invoke GetTickCount
-        ;mov [Seed], eax
         mov [Seed], 1
-
+        bt [Flags], IS_DBG
+        jc .check
+            invoke GetTickCount
+            mov [Seed], eax
+        .check:
         cmp [wparam], IDB_OKBUTTON
         je .idbokbutton
         cmp [wparam], IDB_CANCELBUTTON
@@ -311,23 +321,24 @@ proc LoadImages uses edi
 
     ret
     endp
-proc RandomGet wMin, wMax
+proc Random.Get wMin, wMax
 
-     mov        eax, [RandPr]
-     rol        eax, 7
-     add        eax, 23
-     mov        [RandPr], eax
+    mov eax, [RandPr]
+    mov edx, 08088405h
+    imul edx
+    inc eax
+    mov [RandPr], eax
 
-     mov        ecx, [wMax]
-     sub        ecx, [wMin]
-     inc        ecx
-     xor        edx, edx
-     div        ecx
-     mov        eax, edx
-     add        eax, [wMin]
+    mov ecx, [wMax]
+    sub ecx, [wMin]
+    inc ecx
+    xor edx, edx
+    div ecx
+    mov eax, edx
+    add eax, [wMin]
 
-     ret
-     endp
+    ret
+    endp
 proc IntToStr Num, String
 
     locals
@@ -381,7 +392,6 @@ proc CopyStr uses esi edi, Dest, Sours
     endp
 
 include 'CardEngine.asm'
-;include 'CardDrawing.asm'
 include 'Personalize.asm'
 include 'Data.asm'
 include 'resurses.asm'

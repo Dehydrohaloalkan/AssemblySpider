@@ -49,6 +49,37 @@ proc Game.InitCardInfo uses esi edi, SuitCount
 
     ret
     endp
+proc Game.MixCards uses edi esi, Seed
+
+    cmp [Seed], 1
+    je .finish
+
+    mov eax, [Seed]
+    mov [RandPr], eax
+
+    mov ecx, 100
+    .startloop1:
+        push ecx
+        stdcall Random.Get, 0, 103
+        mov edx, CRD_Size
+        mul edx
+        mov esi, eax
+        stdcall Random.Get, 0, 103
+        mov edx, CRD_Size
+        mul edx
+        mov edi, eax
+
+        mov eax, [Cards + edi + CRD_Info]
+        mov edx, [Cards + esi + CRD_Info]
+        mov [Cards + edi + CRD_Info], edx
+        mov [Cards + esi + CRD_Info], eax
+        pop ecx
+    loop .startloop1
+
+
+    .finish:
+    ret
+    endp
 proc Game.SetStartLayOut
 
     locals
@@ -97,6 +128,7 @@ proc Game.Start, Seed, SuitCount
     stdcall Game.PreInitCards
     stdcall Game.PreInitColumns
     stdcall Game.InitCardInfo, [SuitCount]
+    stdcall Game.MixCards, [Seed]
 
     stdcall Metrics.Calculate
     stdcall Metrics.SetColumnPositions
@@ -1393,7 +1425,12 @@ proc Card.Draw, Card, hdc
 proc Card.InitAnimation, Card, WaitTime, AnimTime
 
     mov edx, [Card]
+    mov eax, [edx + CRD_PredRef]
+    mov edx, eax
+    bt DWORD [edx + CRD_Info], INF_IsAnim
+    jc .add
 
+    mov edx, [Card]
     mov DWORD [edx + CRD_AnimCount], 0
     mov eax, [edx + CRD_XAim]
     cmp eax, [edx + CRD_XCord]
@@ -1403,6 +1440,7 @@ proc Card.InitAnimation, Card, WaitTime, AnimTime
     je .finish
 
     .add:
+    mov edx, [Card]
     mov eax, [WaitTime]
     test eax, eax
     jz .anim

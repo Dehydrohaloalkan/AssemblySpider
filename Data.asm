@@ -106,6 +106,7 @@ section '.gdata' data readable writeable
     IS_NeedAnim             =       4
     IS_NeedBB               =       5
     IS_GameEnd              =       6
+    IS_DBG                  =       7
     Flags                   dd      0
     Clock                   dd      ?
 
