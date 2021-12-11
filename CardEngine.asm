@@ -852,21 +852,34 @@ proc Column.Move, deltaX, deltaY
     endp
 proc Column.CheckMoving, Column
 
+    locals
+        Nominal dd  ?
+        Suit    dd  ?
+    endl
+
     mov edx, [Column]
     bt DWORD [edx + CRD_Info], INF_IsClose
     jc .no
     MGetCardNominal [edx + CRD_Info]
-    mov ecx, eax
+    mov [Nominal], eax
+    MGetCardSuit [edx + CRD_Info]
+    mov [Suit], eax
+
     .startloop1:
-        MGetCardNominal [edx + CRD_Info]
-        cmp eax, ecx
-        jne .no
-        dec ecx
         mov eax, [edx + CRD_NextRef]
         test eax, eax
         jz .yes
         mov edx, eax
+        dec [Nominal]
+
+        MGetCardNominal [edx + CRD_Info]
+        cmp eax, [Nominal]
+        jne .no
+        MGetCardSuit [edx + CRD_Info]
+        cmp eax, [Suit]
+        jne .no
     jmp .startloop1
+
     .yes:
         mov eax, [Column]
         jmp .finish
@@ -964,6 +977,7 @@ proc Column.CheckSolving, Column
 
     locals
         Nominal dd  0
+        Suit    dd  ?
     endl
 
     stdcall Column.Length, [Column]
@@ -973,13 +987,18 @@ proc Column.CheckSolving, Column
     stdcall Column.FindEnd, [Column]
 
     mov edx, eax
+    MGetCardSuit [edx + CRD_Info]
+    mov [Suit], eax
     mov ecx, 13
     .startloop1:
+        bt DWORD [edx + CRD_Info], INF_IsClose
+        jc .no
         MGetCardNominal [edx + CRD_Info]
         cmp eax, [Nominal]
         jne .no
-        bt DWORD [edx + CRD_Info], INF_IsClose
-        jc .no
+        MGetCardSuit [edx + CRD_Info]
+        cmp eax, [Suit]
+        jne .no
         inc [Nominal]
         mov eax, [edx + CRD_PredRef]
         mov edx, eax
