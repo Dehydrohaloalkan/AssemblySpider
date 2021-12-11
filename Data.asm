@@ -70,6 +70,7 @@ section '.gdata' data readable writeable
             INF_IsMove      = 14
             INF_IsWait      = 15
             INF_IsNedColRep = 16
+            INF_ISNedClose  = 17
         CRD_XCord       = 4
         CRD_YCord       = 8
         CRD_XAnim       = 12
@@ -107,6 +108,7 @@ section '.gdata' data readable writeable
     IS_NeedBB               =       5
     IS_GameEnd              =       6
     IS_DBG                  =       7
+    IS_NoReturn             =       8
     Flags                   dd      0
     Clock                   dd      ?
 
@@ -126,5 +128,19 @@ section '.gdata' data readable writeable
     Indent                  dd      ?
     DownInterval            dd      ?
 
-    SaveArray       dd  1000 dup ?
+    ;Turn saver
+    TRN_Info        =   0
+    TRN_Card        =   4
+    TRN_Column      =   8
+    TRN_OldColumn   =   12
+
+    TRI_OpenCard    =   0
+    TRI_CloseCard   =   1
+    TRI_NewCards    =   2
+    TRI_SolveCards  =   3
+
+    TRN_SizeD       =   4
+    TRN_Size        =   TRN_SizeD * 4
+
+    TurnSaver       dd  2000 * TRN_SizeD dup ?
     SavePointer     dd  ?

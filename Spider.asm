@@ -6,8 +6,8 @@ include 'Macros.asm'
 
 section '.code' code readable executable
 
-stdcall Game.MixCards
-stdcall CheckProc
+stdcall Card.InitAnimation
+stdcall Game.OnMouseUp
 
 start:
     invoke GetModuleHandle, 0
@@ -66,6 +66,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
     je .wmgetminmaxinfo
     cmp [wmsg], WM_COMMAND
     je .wmcommand
+    cmp [wmsg], WM_KEYDOWN
+    je .wmkeydown
 
 
     .defwndproc:
@@ -114,6 +116,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
     .wmlbuttondown:
         stdcall GetLHparam, [lparam], LowWord, HighWord
+        invoke SetCapture, [hwnd]
         stdcall Game.OnMouseDown, [hwnd]
         jmp .finish
     .wmmousemove:
@@ -122,6 +125,7 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         jmp .finish
     .wmlbuttonup:
         stdcall GetLHparam, [lparam], LowWord, HighWord
+        invoke ReleaseCapture
         stdcall Game.OnMouseUp
         jmp .finish
     .wmgetminmaxinfo:
@@ -131,6 +135,20 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
         mov DWORD [edx], 1000
         mov DWORD [edx + 4], 750
 
+        jmp .finish
+    .wmkeydown:
+
+        xor eax, eax
+        cmp [wparam], 05Ah
+        jne .finish
+
+        bt [Flags], IS_NoReturn
+        jc .finish
+
+        stdcall Turn.Return
+        bts [Flags], IS_NeedBB
+
+        xor eax, eax
         jmp .finish
     .wmcommand:
 

@@ -1,8 +1,9 @@
 macro MCreateBackBuffer
 {
-    invoke BeginPaint, [hwnd], ps
+    invoke GetDC, [hwnd]
+    push eax
     stdcall Map.CreateBackBuffer, eax
-    invoke EndPaint, [hwnd], ps
+    invoke ReleaseDC, [hwnd]
 }
 
 macro MGetCardSuit Info

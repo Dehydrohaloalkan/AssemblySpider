@@ -122,6 +122,7 @@ proc Game.Start, Seed, SuitCount
 
     mov [Flags], 0
     mov [Points], 500
+    mov [SavePointer], 0
     bts [Flags], IS_GAME
     bts [Flags], IS_NeedBB
 
@@ -133,16 +134,12 @@ proc Game.Start, Seed, SuitCount
     stdcall Metrics.Calculate
     stdcall Metrics.SetColumnPositions
 
-
     mov [NewCount], 5
     stdcall NewColumn.InitStart
     stdcall NewColumn.SetPositions
 
     stdcall Game.SetStartLayOut
     stdcall Game.InitStart
-
-
-
 
     ret
     endp
@@ -267,9 +264,9 @@ proc Game.FindColumn, XCord, YCord
     div [CenterColumnInterval]
     dec eax
     cmp eax, -1
-    je .nocolumn
+    jl .nocolumn
     cmp eax, 10
-    je .nocolumn
+    jg .nocolumn
 
     mov edx, CRD_Size
     mul edx
@@ -349,9 +346,11 @@ proc Game.OnPaint, hwnd
         btr [Flags], IS_Animation
         bts [Flags], IS_NeedCheck
         stdcall Animation.Run
+        bts [Flags], IS_NeedBB
         add [Clock], eax
         jmp .skipanimation
     .afteranimation:
+        btr [Flags], IS_NoReturn
         btr [Flags], IS_NeedCheck
         jnc .check
             stdcall Game.Solve
@@ -404,6 +403,7 @@ proc Game.OnMouseDown, hwnd
         test eax, eax
         jz .skip
         stdcall NewColumn.GetNewCards
+        stdcall Turn.Save, 0, 0, 0, TRI_NewCards
     .skip:
     MCreateBackBuffer
 
@@ -440,6 +440,7 @@ proc Game.OnMouseUp
     endl
 
     btr [Flags], IS_Mouse_Down
+    bts [Flags], IS_NeedBB
 
     mov edx, [MovingColumn + CRD_NextRef]
     mov [Card], edx
@@ -459,17 +460,30 @@ proc Game.OnMouseUp
 
     cmp eax, [OldColumn]
     je .old
+        dec [Points]
         stdcall Column.Replace, [Column], [Card]
         stdcall Column.SetCardsAims, [Column]
         stdcall Column.InitAnimation, [Column], 0, ANIMATION_TIME
         stdcall Column.SetCardsAims, [OldColumn]
         stdcall Column.InitAnimation, [OldColumn], 0, ANIMATION_TIME
+
         stdcall Column.FindEnd, [OldColumn]
         cmp eax, [OldColumn]
-        je .set
+        je .open
+
+        mov edx, eax
+        bt DWORD [edx + CRD_Info], INF_IsClose
+        jc .close
+        .open:
+            stdcall Turn.Save, [Card], [Column], [OldColumn], TRI_OpenCard
+            jmp .skip
+        .close:
+            push eax
+            stdcall Turn.Save, [Card], [Column], [OldColumn], TRI_CloseCard
+            pop eax
             stdcall Card.Open, eax
-        .set:
-        dec [Points]
+        .skip:
+
         jmp .finish
     .old:
         stdcall Column.Replace, [OldColumn], [Card]
@@ -967,6 +981,8 @@ proc Column.Solve, Column
     test eax, eax
     jz .finish
 
+        stdcall Turn.Save, 0, 0, [Column], TRI_SolveCards
+
         stdcall Column.FindEnd, [Column]
         push eax
         mov ecx, 13
@@ -981,6 +997,7 @@ proc Column.Solve, Column
         inc [SolveCount]
         add [Points], 100
         bts [Flags], IS_NeedAnim
+        bts [Flags], IS_NoReturn
         stdcall SolveColumn.SetCardsAims
 
         pop edx
@@ -1060,7 +1077,7 @@ proc NewColumn.InitStart
 
     ret
     endp
-proc NewColumn.SetPositions
+proc NewColumn.SetCardsAims
 
     locals
         XCord   dd  ?
@@ -1090,9 +1107,9 @@ proc NewColumn.SetPositions
         mov edx, eax
 
         mov eax, [XCord]
-        mov [edx + CRD_XCord], eax
+        mov [edx + CRD_XAim], eax
         mov eax, [YCord]
-        mov [edx + CRD_YCord], eax
+        mov [edx + CRD_YAim], eax
 
         loop .skip
             mov ecx, 10
@@ -1104,6 +1121,28 @@ proc NewColumn.SetPositions
     .finloop1:
 
     .finish:
+
+    ret
+    endp
+proc NewColumn.SetPositions
+
+    stdcall NewColumn.SetCardsAims
+
+    mov edx, NewColumn
+    .startloop1:
+        mov eax, [edx + CRD_NextRef]
+        test eax, eax
+        jz .finloop1
+        mov edx, eax
+
+        mov eax, [edx + CRD_XAim]
+        mov [edx + CRD_XCord], eax
+        mov eax, [edx + CRD_YAim]
+        mov [edx + CRD_YCord], eax
+
+    jmp .startloop1
+    .finloop1:
+
     ret
     endp
 proc NewColumn.CheckCollision, XCord, YCord
@@ -1246,13 +1285,169 @@ proc SolveColumn.SetPositions
         test eax, eax
         jz .finloop1
         mov edx, eax
+
         mov eax, [edx + CRD_XAim]
         mov [edx + CRD_XCord], eax
         mov eax, [edx + CRD_YAim]
         mov [edx + CRD_YCord], eax
+
     jmp .startloop1
     .finloop1:
 
+    ret
+    endp
+
+
+proc Turn.Save, Card, Column, OldColumn, Info
+
+    mov edx, [SavePointer]
+
+    mov eax, [Card]
+    mov [TurnSaver + edx + TRN_Card], eax
+    mov eax, [Column]
+    mov [TurnSaver + edx + TRN_Column], eax
+    mov eax, [OldColumn]
+    mov [TurnSaver + edx + TRN_OldColumn], eax
+    xor eax, eax
+    mov DWORD [TurnSaver + edx + TRN_Info], eax
+    mov eax, [Info]
+    bts DWORD [TurnSaver + edx + TRN_Info], eax
+
+    add [SavePointer], TRN_Size
+
+    ret
+    endp
+proc Turn.Return
+
+    locals
+        Card        dd  ?
+        Column      dd  ?
+        OldColumn   dd  ?
+    endl
+
+    cmp [SavePointer], 0
+    je .finish
+    sub [SavePointer], TRN_Size
+    dec [Points]
+    mov edx, [SavePointer]
+
+    mov eax, [TurnSaver + edx + TRN_Card]
+    mov [Card], eax
+    mov eax, [TurnSaver + edx + TRN_Column]
+    mov [Column], eax
+    mov eax, [TurnSaver + edx + TRN_OldColumn]
+    mov [OldColumn], eax
+
+    bt DWORD [TurnSaver + edx + TRN_Info], TRI_OpenCard
+    jc .opencard
+    bt DWORD [TurnSaver + edx + TRN_Info], TRI_CloseCard
+    jc .closecard
+    bt DWORD [TurnSaver + edx + TRN_Info], TRI_NewCards
+    jc .newcards
+    bt DWORD [TurnSaver + edx + TRN_Info], TRI_SolveCards
+    jc .solvecards
+    jmp .finish
+
+    .opencard:
+
+        stdcall Column.Replace, [OldColumn], [Card]
+        stdcall Column.SetCardsAims, [OldColumn]
+        stdcall Column.InitAnimation, [OldColumn], 0, ANIMATION_TIME
+        stdcall Column.SetCardsAims, [Column]
+        stdcall Column.InitAnimation, [OldColumn], 0, ANIMATION_TIME
+        bts [Flags], IS_NoReturn
+
+        jmp .finish
+    .closecard:
+
+        stdcall Column.FindEnd, [OldColumn]
+        stdcall Card.Close, eax
+        stdcall Column.Replace, [OldColumn], [Card]
+        stdcall Column.SetCardsAims, [OldColumn]
+        stdcall Column.InitAnimation, [OldColumn], 0, ANIMATION_TIME
+        stdcall Column.SetCardsAims, [Column]
+        stdcall Column.InitAnimation, [OldColumn], 0, ANIMATION_TIME
+        bts [Flags], IS_NoReturn
+
+        jmp .finish
+    .newcards:
+
+        inc [NewCount]
+        stdcall Column.FindEnd, Columns + 9 * CRD_Size
+        push eax
+
+        mov ecx, 10
+        mov [Column], Columns + 9 * CRD_Size
+        .startloop11:
+            push ecx
+            stdcall Column.FindEnd, [Column]
+            mov [Card], eax
+            stdcall Column.Replace, NewColumn, [Card]
+            sub [Column], CRD_Size
+            pop ecx
+        loop .startloop11
+
+        stdcall NewColumn.SetCardsAims
+        pop [Card]
+
+        mov ecx, 10
+        xor eax, eax
+        .startloop12:
+            push ecx
+            push eax
+            stdcall Card.InitAnimation, [Card], eax, ANIMATION_TIME
+            mov edx, [Card]
+            bts DWORD [edx + CRD_Info], INF_ISNedClose
+            mov eax, [edx + CRD_NextRef]
+            mov [Card], eax
+            pop eax
+            add eax, DEFAULT_ANIM_WAIT
+            pop ecx
+        loop .startloop12
+
+        jmp .finish
+    .solvecards:
+
+        dec [SolveCount]
+        sub [Points], 100
+        stdcall Column.FindEnd, SolveColumn
+        push eax
+        mov [Card], eax
+
+        mov ecx, 13
+        .startloop21:
+            push ecx
+            mov edx, [Card]
+            mov eax, [edx + CRD_PredRef]
+            mov [Card], eax
+            stdcall Column.Replace, [OldColumn], edx
+            pop ecx
+        loop .startloop21
+
+        stdcall Column.SetCardsAims, [OldColumn]
+        pop [Card]
+
+        mov ecx, 13
+        xor eax, eax
+        .startloop22:
+            push ecx
+            push eax
+            stdcall Card.InitAnimation, [Card], eax, ANIMATION_TIME
+            mov edx, [Card]
+            mov eax, [edx + CRD_NextRef]
+            mov [Card], eax
+            pop eax
+            add eax, DEFAULT_ANIM_WAIT
+            pop ecx
+        loop .startloop22
+
+        stdcall Turn.Return
+        bts [Flags], IS_NeedBB
+
+        jmp .finish
+
+
+    .finish:
     ret
     endp
 
@@ -1528,6 +1723,11 @@ proc Card.EndAnimation, Card
     mov DWORD [edx + CRD_AnimWait], 0
     stdcall Animation.Remove, edx
 
+    mov edx, [Card]
+    btr DWORD [edx + CRD_Info], INF_ISNedClose
+    jnc .finish
+        stdcall Card.Close, edx
+    .finish:
     ret
     endp
 proc Card.CheckCollision, Card, XCord, YCord

@@ -55,7 +55,7 @@ section '.rsrc' resource data readable
             dialogitem 'Button', '&1 suit', IDC_1SUIT, 10, 17, 60, 10, WS_VISIBLE+BS_AUTORADIOBUTTON+WS_GROUP
             dialogitem 'Button', '&2 suits', IDC_2SUIT, 10, 27, 60, 10, WS_VISIBLE+BS_AUTORADIOBUTTON
             dialogitem 'Button', '&4 suits', IDC_4SUIT, 10, 37, 60, 10, WS_VISIBLE+BS_AUTORADIOBUTTON
-            dialogitem 'Button', '&Load Old Game', IDC_LOAD, 10, 47, 70, 10, WS_VISIBLE+BS_AUTORADIOBUTTON
+            dialogitem 'Button', '&Load DBG Game', IDC_LOAD, 10, 47, 70, 10, WS_VISIBLE+BS_AUTORADIOBUTTON
         dialogitem 'Button', '&OK', IDB_OKBUTTON , 5, 60, 85, 15, WS_VISIBLE
         dialogitem 'Button', '&Cancel', IDB_CANCELBUTTON , 5, 75, 85, 15, WS_VISIBLE
     enddialog
