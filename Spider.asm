@@ -144,6 +144,8 @@ proc WindowProc uses ebx esi edi, hwnd, wmsg, wparam, lparam
 
         bt [Flags], IS_NoReturn
         jc .finish
+        bt [Flags], IS_GameEnd
+        jc .finish
 
         stdcall Turn.Return
         bts [Flags], IS_NeedBB
