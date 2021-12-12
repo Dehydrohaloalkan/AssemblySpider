@@ -135,6 +135,7 @@ proc Game.Start, Seed, SuitCount
     stdcall Metrics.SetColumnPositions
 
     mov [NewCount], 5
+    mov [SolveCount], 0
     stdcall NewColumn.InitStart
     stdcall NewColumn.SetPositions
 
@@ -1160,9 +1161,8 @@ proc NewColumn.CheckCollision, XCord, YCord
     add eax, [CardWigth]
 
     mov edx, [RectClient.right]
-    sub edx, eax
+    sub edx, [CenterColumnInterval]
         mov [TempRect.right], edx
-    add eax, [CenterColumnInterval]
     sub edx, eax
         mov [TempRect.left], edx
 
@@ -1389,6 +1389,7 @@ proc Turn.Return
 
         stdcall NewColumn.SetCardsAims
         pop [Card]
+        bts [Flags], IS_NeedAnim
 
         mov ecx, 10
         xor eax, eax
@@ -1425,10 +1426,11 @@ proc Turn.Return
         loop .startloop21
 
         stdcall Column.SetCardsAims, [OldColumn]
+        stdcall Column.InitAnimation, [OldColumn], 0, ANIMATION_TIME
         pop [Card]
 
         mov ecx, 13
-        xor eax, eax
+        mov eax, ANIMATION_TIME
         .startloop22:
             push ecx
             push eax
